@@ -1,0 +1,1048 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Schicht-Navigator Designsystem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap">
+<style id="sn-tokens">
+/*@@TOKENS@@*/
+</style>
+<style id="sn-components">
+/*@@COMPONENTS@@*/
+</style>
+<style id="doc-styles">
+/* Nur für diese Showcase-Seite (Präfix doc-), nicht Teil des Systems */
+.doc-top { background: var(--sn-header-bg); color: #fff; padding: 20px 16px 16px; }
+.doc-top__inner, .doc-main { max-width: 1240px; margin: 0 auto; }
+.doc-top h1 { margin: 0; font: 700 30px/1.05 var(--sn-font-display); }
+.doc-top p { margin: 6px 0 0; font-weight: 500; max-width: 60ch; }
+.doc-theme { margin-top: 14px; max-width: 360px; background: rgba(0,0,0,.22); }
+.doc-theme .sn-segment__tab { color: #fff; }
+.doc-theme .sn-segment__tab[aria-pressed="true"] { color: var(--sn-text); }
+.doc-toc { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 16px; max-width: 1240px; margin: 0 auto; }
+.doc-toc a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 14px; border-radius: 999px; border: 2px solid var(--sn-border-strong); color: var(--sn-text); font-weight: 600; text-decoration: none; }
+.doc-main { padding: 0 12px 64px; }
+.doc-section { padding-top: 28px; }
+.doc-section > h2 { margin: 0 4px 4px; font: 700 26px/1.1 var(--sn-font-display); }
+.doc-section > p { margin: 0 4px 14px; color: var(--sn-text-muted); max-width: 70ch; }
+.doc-screens { display: grid; gap: 24px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 390px), 1fr)); align-items: start; }
+.doc-frame { border-radius: 28px; overflow: hidden; border: 1px solid var(--sn-border); box-shadow: var(--sn-shadow-2); background: var(--sn-bg); }
+.doc-frame .sn-app { height: auto; min-height: 640px; }
+.doc-frame .sn-main { overflow: visible; }
+.doc-screen-title { font-size: 24px; margin: 0 4px 12px !important; }
+.doc-caption { margin: 10px 6px 0; font-size: 14px; color: var(--sn-text-muted); }
+.doc-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); align-items: start; }
+.doc-box { background: var(--sn-surface); border: 1px solid var(--sn-border); border-radius: 16px; padding: 16px; min-width: 0; }
+.doc-box > h3 { margin: 0 0 12px; font: 700 20px/1.1 var(--sn-font-display); }
+.doc-box > h3 small { display: block; margin-top: 2px; font: 600 13px var(--sn-font-body); color: var(--sn-text-muted); font-family: ui-monospace, Menlo, Consolas, monospace; }
+.doc-box--plain { background: var(--sn-bg); }
+.doc-photo {
+  aspect-ratio: 16 / 9; border-radius: 8px; margin-top: 12px; display: grid; place-items: end start; padding: 10px;
+  background: linear-gradient(160deg, #6d7a86 0%, #3d4852 55%, #22292f 100%); color: #fff; font-size: 13px; font-weight: 600;
+}
+.doc-photo span { background: rgba(0,0,0,.6); padding: 3px 8px; border-radius: 6px; }
+.doc-contrast { width: 100%; border-collapse: collapse; font-size: 14px; }
+.doc-contrast th, .doc-contrast td { text-align: left; padding: 8px 6px; border-top: 1px solid var(--sn-border); vertical-align: middle; }
+.doc-contrast td:last-child { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+.doc-sample { display: inline-block; padding: 2px 8px; border-radius: 6px; font-weight: 700; border: 1px solid var(--sn-border); }
+.doc-hold-hint { margin: 8px 0 0; font-size: 14px; color: var(--sn-text-muted); text-align: center; }
+</style>
+</head>
+<body>
+
+<!-- ================= Icon-Sprite (inline, keine Abhängigkeit) ================= -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-logo" viewBox="0 0 24 24"><path d="M4 3.5 21 12 4 20.5 8 12z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></symbol>
+  <symbol id="i-tasks" viewBox="0 0 24 24"><path d="M3.5 6l1.7 1.7L8.5 4.5M3.5 12.5l1.7 1.7L8.5 11M3.5 19l1.7 1.7 3.3-3.2M12 6h9M12 12.5h9M12 19h9"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 20.5l1.4-5.2A8.5 8.5 0 1 1 21 11.5z"/></symbol>
+  <symbol id="i-report" viewBox="0 0 24 24"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 9.5v4.5M12 17v.5"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 7.5h4L9 4.5h6l2 3h4V20H3z"/><circle cx="12" cy="13.5" r="3.8"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 3 10.5l7.5 3L13.5 21 21 3zM10.5 13.5 21 3"/></symbol>
+  <symbol id="i-escalate" viewBox="0 0 24 24"><path d="M6 12.5l6-6 6 6M6 19l6-6 6 6"/></symbol>
+  <symbol id="i-forward" viewBox="0 0 24 24"><path d="M14 5l7 7-7 7M21 12H9a6 6 0 0 0-6 6v1"/></symbol>
+  <symbol id="i-coffee" viewBox="0 0 24 24"><path d="M3.5 9h13v4.5a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6V9zM16.5 11H18a2.5 2.5 0 0 1 0 5h-1.6M8 3v3M12 3v3"/></symbol>
+  <symbol id="i-sos" viewBox="0 0 24 24"><path d="M6 18v-5.5a6 6 0 0 1 12 0V18M4 18h16v3H4zM12 2.5v2M3.5 6l1.6 1.4M20.5 6l-1.6 1.4M12 10v4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.8 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.7 7.5-9.5V6L12 3z"/><path d="M12 8.5v6M9 11.5h6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2a6.2 6.2 0 0 1 3.5 5.8"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 3.5h3.5l2 5-2.5 1.6a11 11 0 0 0 5.9 5.9l1.6-2.5 5 2v3.5a2 2 0 0 1-2 2A17 17 0 0 1 3 5.5a2 2 0 0 1 2-2z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.8 1.8H4.2L6 16.5zM10 21h4"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 5h18l-7 8.5V20l-4-2v-4.5z"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3 13.5 6 5h12l3 8.5V19H3z"/><path d="M3 13.5h5l1 2.5h6l1-2.5h5"/></symbol>
+  <symbol id="i-run" viewBox="0 0 24 24"><circle cx="14.5" cy="4.5" r="2"/><path d="M7 21l3-6 3 2.5V21M6 11l3-3h4.5l2.5 3.5 3 .5M10 8l-1.5 6.5"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4 7 7 0 0 0 20 14.5z"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/></symbol>
+</svg>
+
+<header class="doc-top">
+  <div class="doc-top__inner">
+    <h1>Schicht-Navigator · Designsystem v2</h1>
+    <p>Klar, ruhig, schnell: alle Bausteine für die Kommunikation zwischen Leitung und Team, in echten Beispielen aus dem Filialalltag.</p>
+    <div class="sn-segment doc-theme" role="group" aria-label="Darstellung">
+      <button class="sn-segment__tab" type="button" data-theme-set="auto" aria-pressed="true"><svg class="sn-icon sn-icon--sm"><use href="#i-auto"/></svg>Auto</button>
+      <button class="sn-segment__tab" type="button" data-theme-set="light" aria-pressed="false"><svg class="sn-icon sn-icon--sm"><use href="#i-sun"/></svg>Hell</button>
+      <button class="sn-segment__tab" type="button" data-theme-set="dark" aria-pressed="false"><svg class="sn-icon sn-icon--sm"><use href="#i-moon"/></svg>Dunkel</button>
+    </div>
+  </div>
+</header>
+
+<nav class="doc-toc" aria-label="Inhalt">
+  <a href="#mitarbeiter">Mitarbeiter-Start</a>
+  <a href="#leitung">Leitung live</a>
+  <a href="#meldung">Meldung &amp; Eskalation</a>
+  <a href="#chat">Chat</a>
+  <a href="#sos">SOS</a>
+  <a href="#bausteine">Bausteine</a>
+  <a href="#kontrast">Kontraste</a>
+</nav>
+
+<main class="doc-main">
+
+<!-- ============================================================
+     1 + 2 · Bildschirme
+     ============================================================ -->
+<section class="doc-section">
+<div class="doc-screens">
+
+<!-- ---------------- 1 · Mitarbeiter-Startseite ---------------- -->
+<div id="mitarbeiter">
+  <h2 class="sn-section-title doc-screen-title" style="margin-top:0">1 · Mitarbeiter-Startseite</h2>
+  <div class="doc-frame">
+  <div class="sn-app" id="app-emp">
+    <header class="sn-header">
+      <span class="sn-header__logo" aria-hidden="true"><svg><use href="#i-logo"/></svg></span>
+      <div class="sn-header__text">
+        <h3 class="sn-header__title">Guten Morgen, Anna</h3>
+        <p class="sn-header__sub">Drogerie · Frühschicht 06:00–14:30</p>
+      </div>
+      <button class="sn-header__action" type="button"><svg class="sn-icon"><use href="#i-user"/></svg>Profil</button>
+    </header>
+
+    <div class="sn-main">
+      <!-- Rundruf, der quittiert werden muss: steht immer ganz oben -->
+      <article class="sn-card sn-card--urgent sn-message" aria-labelledby="msg1-t">
+        <div class="sn-card__flag">🔥 Dringend · Bitte quittieren</div>
+        <div class="sn-message__from">
+          <span class="sn-avatar sn-avatar--sm sn-avatar--lead" aria-hidden="true">TK</span>
+          <span><strong>Thomas K.</strong> · Marktleitung · 09:12</span>
+        </div>
+        <h4 class="sn-card__title" id="msg1-t" style="margin-top:10px">Rückruf Babybrei „Banane“</h4>
+        <p class="sn-message__body" style="margin-top:4px">Charge L2311 sofort aus Regal 14 nehmen und in den Retourenkäfig im Lager stellen.</p>
+        <dl class="sn-meta">
+          <div class="sn-meta__item"><svg class="sn-icon"><use href="#i-clock"/></svg><dt>Frist</dt><dd class="sn-deadline sn-deadline--soon">10:00 · noch 13 Min</dd></div>
+          <div class="sn-meta__item"><svg class="sn-icon"><use href="#i-users"/></svg><dt>An</dt><dd>Drogerie (6)</dd></div>
+        </dl>
+        <div style="margin-top:16px">
+          <button class="sn-btn sn-btn--ack" type="button" data-ack data-ack-target="ack-rundruf" data-toast-region="toast-emp">
+            <svg class="sn-icon"><use href="#i-check"/></svg><span>Quittieren</span>
+          </button>
+        </div>
+      </article>
+
+      <section class="sn-hero" aria-label="Schichtfortschritt">
+        <div class="sn-ring" style="--p:62" role="img" aria-label="5 von 8 Aufgaben erledigt">
+          <span><span class="sn-ring__value">5/8</span><span class="sn-ring__label">erledigt</span></span>
+        </div>
+        <div>
+          <p class="sn-hero__title">Noch 3 Aufgaben</p>
+          <p class="sn-hero__text">ca. 55 Min Arbeit · Schichtende in 4 Std 43 Min</p>
+        </div>
+      </section>
+
+      <h3 class="sn-section-title">Schnellaktionen</h3>
+      <div class="sn-tiles">
+        <button class="sn-tile" type="button"><svg class="sn-icon sn-icon--lg sn-tile__icon"><use href="#i-camera"/></svg><span><span class="sn-tile__label">Problem melden</span><span class="sn-tile__sub">Foto + Ort, 10 Sek.</span></span></button>
+        <button class="sn-tile" type="button"><svg class="sn-icon sn-icon--lg sn-tile__icon"><use href="#i-users"/></svg><span><span class="sn-tile__label">Hilfe holen</span><span class="sn-tile__sub">Kollegen in der Nähe</span></span></button>
+        <button class="sn-tile" type="button"><svg class="sn-icon sn-icon--lg sn-tile__icon"><use href="#i-coffee"/></svg><span><span class="sn-tile__label">Pause</span><span class="sn-tile__sub">15 Min verfügbar</span></span></button>
+        <a class="sn-tile sn-tile--sos" href="#sos"><svg class="sn-icon sn-icon--lg sn-tile__icon"><use href="#i-sos"/></svg><span><span class="sn-tile__label">SOS</span><span class="sn-tile__sub">Notfall melden</span></span></a>
+      </div>
+
+      <h3 class="sn-section-title">Meine Aufgaben</h3>
+      <div class="sn-segment" role="tablist" aria-label="Aufgaben filtern">
+        <button class="sn-segment__tab" role="tab" id="t-open" aria-selected="true" aria-controls="p-open" type="button">Offen <span class="sn-badge">3</span></button>
+        <button class="sn-segment__tab" role="tab" id="t-done" aria-selected="false" aria-controls="p-done" type="button" tabindex="-1">Erledigt <span class="sn-badge">5</span></button>
+      </div>
+
+      <div id="p-open" role="tabpanel" aria-labelledby="t-open">
+        <article class="sn-card sn-card--urgent sn-task">
+          <div class="sn-card__flag">🔥 Dringend</div>
+          <div class="sn-card__head">
+            <h4 class="sn-card__title">Aktionsware Gang 7 auffüllen</h4>
+            <span class="sn-chip">Offen</span>
+          </div>
+          <dl class="sn-meta">
+            <div class="sn-meta__item"><svg class="sn-icon"><use href="#i-clock"/></svg><dt class="sn-sr-only">Frist</dt><dd class="sn-deadline">bis 10:30 · noch 43 Min</dd></div>
+            <div class="sn-meta__item"><svg class="sn-icon"><use href="#i-pin"/></svg><dt class="sn-sr-only">Ort</dt><dd>Gang 7, Kopfende</dd></div>
+            <div class="sn-meta__item"><svg class="sn-icon"><use href="#i-user"/></svg><dt>Von</dt><dd>Sandra P.</dd></div>
+          </dl>
+          <div class="sn-card__actions">
+            <button class="sn-btn sn-btn--primary" type="button"><svg class="sn-icon"><use href="#i-play"/></svg>Starten</button>
+            <button class="sn-btn sn-btn--secondary" type="button"><svg class="sn-icon"><use href="#i-chat"/></svg>Nachfragen</button>
+          </div>
+        </article>
+
+        <article class="sn-card sn-task">
+          <div class="sn-card__head">
+            <h4 class="sn-card__title">MHD-Kontrolle Kühlregal Molkerei</h4>
+            <span class="sn-chip sn-chip--info"><svg class="sn-icon"><use href="#i-play"/></svg>Läuft</span>
+          </div>
+          <div class="sn-row" style="margin-top:12px; gap:12px">
+            <div class="sn-ring sn-ring--ok" style="--p:40; --size:56px; --track:6px" role="img" aria-label="8 von 20 Minuten">
+              <span class="sn-ring__value" style="font-size:16px">8′</span>
+            </div>
+            <dl class="sn-meta" style="margin:0">
+              <div class="sn-meta__item"><dt>Gestartet</dt><dd>09:39 · ca. 20 Min</dd></div>
+              <div class="sn-meta__item"><dt>Frist</dt><dd>bis Schichtende</dd></div>
+            </dl>
+          </div>
+          <div class="sn-card__actions">
+            <button class="sn-btn sn-btn--primary" type="button"><svg class="sn-icon"><use href="#i-check"/></svg>Erledigt</button>
+            <button class="sn-btn sn-btn--secondary" type="button"><svg class="sn-icon"><use href="#i-camera"/></svg>Foto</button>
+          </div>
+        </article>
+
+        <article class="sn-card sn-task">
+          <div class="sn-card__head">
+            <h4 class="sn-card__title">Displays am Eingang abbauen</h4>
+            <span class="sn-chip">Offen</span>
+          </div>
+          <dl class="sn-meta">
+            <div class="sn-meta__item"><svg class="sn-icon"><use href="#i-clock"/></svg><dt class="sn-sr-only">Frist</dt><dd>bis 13:00</dd></div>
+            <div class="sn-meta__item"><svg class="sn-icon"><use href="#i-pin"/></svg><dt class="sn-sr-only">Ort</dt><dd>Eingang links</dd></div>
+          </dl>
+        </article>
+      </div>
+      <div id="p-done" role="tabpanel" aria-labelledby="t-done" hidden>
+        <article class="sn-card sn-task is-done">
+          <div class="sn-card__head">
+            <h4 class="sn-card__title">Paletten Drogerie verräumt</h4>
+            <span class="sn-chip sn-chip--ok"><svg class="sn-icon"><use href="#i-check"/></svg>Erledigt</span>
+          </div>
+          <p class="sn-card__text sn-muted">08:52 · 34 Min · bestätigt von Sandra P.</p>
+        </article>
+        <article class="sn-card sn-task is-done">
+          <div class="sn-card__head">
+            <h4 class="sn-card__title">Preisschilder Shampoo-Aktion</h4>
+            <span class="sn-chip sn-chip--ok"><svg class="sn-icon"><use href="#i-check"/></svg>Erledigt</span>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <div class="sn-toast-region" id="toast-emp" aria-live="polite"></div>
+
+    <nav class="sn-nav" aria-label="Hauptnavigation">
+      <a class="sn-nav__item" href="#mitarbeiter" aria-current="page"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-home"/></svg></span>Start</a>
+      <a class="sn-nav__item" href="#mitarbeiter"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-tasks"/></svg><span class="sn-badge">3</span></span>Aufgaben</a>
+      <a class="sn-nav__item" href="#chat"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-chat"/></svg><span class="sn-badge">2</span></span>Chat</a>
+      <a class="sn-nav__item" href="#meldung"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-report"/></svg></span>Meldungen</a>
+      <a class="sn-nav__item" href="#bausteine"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-menu"/></svg></span>Mehr</a>
+    </nav>
+  </div>
+  </div>
+  <p class="doc-caption">Reihenfolge nach Dringlichkeit: Quittierpflicht → Fortschritt → Schnellaktionen → Aufgaben. „Quittieren“ antippen zählt live in der Leitungsansicht mit.</p>
+</div>
+
+<!-- ---------------- 2 · Leitungs-Live-Ansicht ---------------- -->
+<div id="leitung">
+  <h2 class="sn-section-title doc-screen-title" style="margin-top:0">2 · Leitungs-Live-Ansicht</h2>
+  <div class="doc-frame">
+  <div class="sn-app" id="app-lead">
+    <header class="sn-header">
+      <span class="sn-header__logo" aria-hidden="true"><svg><use href="#i-logo"/></svg></span>
+      <div class="sn-header__text">
+        <h3 class="sn-header__title">Live · Frühschicht</h3>
+        <p class="sn-header__sub">31 im Dienst · Stand 09:47</p>
+      </div>
+      <button class="sn-header__action" type="button"><svg class="sn-icon"><use href="#i-filter"/></svg>Filter</button>
+    </header>
+
+    <div class="sn-alert sn-alert--escalation sn-alert--sticky" role="alert">
+      <span class="sn-alert__icon"><svg class="sn-icon"><use href="#i-escalate"/></svg></span>
+      <p class="sn-alert__title">Eskaliert an dich: Kühlregal 3</p>
+      <p class="sn-alert__text">9 °C gemessen · Abteilungsleitung hat 15 Min nicht reagiert</p>
+      <div class="sn-alert__actions">
+        <button class="sn-btn sn-btn--on-accent" type="button">Übernehmen</button>
+        <a class="sn-btn sn-btn--on-accent-outline" href="#meldung">Ansehen</a>
+      </div>
+    </div>
+
+    <div class="sn-main">
+      <div class="sn-kpis">
+        <button class="sn-kpi" type="button"><span class="sn-kpi__value">31</span><span class="sn-kpi__label">Im Dienst · 4 Pause</span></button>
+        <button class="sn-kpi" type="button"><span class="sn-kpi__value">14</span><span class="sn-kpi__label">Offene Aufgaben</span></button>
+        <button class="sn-kpi sn-kpi--alert" type="button"><span class="sn-kpi__value">⚠ 2</span><span class="sn-kpi__label">Überfällig</span></button>
+        <button class="sn-kpi" type="button"><span class="sn-kpi__value">3</span><span class="sn-kpi__label">Meldungen offen</span></button>
+      </div>
+
+      <h3 class="sn-section-title">Rundruf 09:12 <small>🔥 Rückruf Babybrei</small></h3>
+      <section class="sn-ackbar" id="ack-rundruf" data-total="31" data-ack="12" data-read="9" aria-label="Empfangsbestätigung Rundruf">
+        <div class="sn-ackbar__head">
+          <p class="sn-ackbar__count" style="margin:0"><span data-ack-count>12</span> <small>von 31 quittiert</small></p>
+          <span class="sn-ackbar__pct" data-ack-pct>39 %</span>
+        </div>
+        <div class="sn-ackbar__bar" role="img" data-ack-bar aria-label="12 quittiert, 9 gelesen, 10 nur gesendet">
+          <span class="sn-ackbar__seg sn-ackbar__seg--ack" style="--n:12"></span>
+          <span class="sn-ackbar__seg sn-ackbar__seg--read" style="--n:9"></span>
+          <span class="sn-ackbar__seg sn-ackbar__seg--sent" style="--n:10"></span>
+        </div>
+        <ul class="sn-ackbar__legend">
+          <li><span class="sn-ackbar__swatch sn-ackbar__seg--ack"></span><span class="sn-receipt sn-receipt--ack"><span data-ack-count>12</span>&nbsp;quittiert</span></li>
+          <li><span class="sn-ackbar__swatch sn-ackbar__seg--read"></span><span class="sn-receipt sn-receipt--read"><span data-read-count>9</span>&nbsp;gelesen</span></li>
+          <li><span class="sn-ackbar__swatch sn-ackbar__seg--sent"></span><span class="sn-receipt sn-receipt--sent">10&nbsp;nur gesendet</span></li>
+        </ul>
+        <div class="sn-ackbar__actions">
+          <button class="sn-btn sn-btn--secondary" type="button" data-toast="Erinnerung an 19 Personen gesendet" data-toast-region="toast-lead"><svg class="sn-icon"><use href="#i-bell"/></svg><span>Erinnern · <span data-missing-count>19</span></span></button>
+          <button class="sn-btn sn-btn--ghost" type="button">Wer fehlt?</button>
+        </div>
+      </section>
+
+      <h3 class="sn-section-title">Brennpunkte <small>3 Personen</small></h3>
+      <article class="sn-card sn-person-card">
+        <div class="sn-person">
+          <span class="sn-avatar" aria-hidden="true">MY<span class="sn-avatar__status sn-avatar__status--pause"></span></span>
+          <div class="sn-person__body">
+            <p class="sn-person__name">Mehmet Y.</p>
+            <p class="sn-person__role">Obst &amp; Gemüse</p>
+          </div>
+          <span class="sn-chip sn-chip--warn"><svg class="sn-icon"><use href="#i-coffee"/></svg>Pause +6 Min</span>
+        </div>
+        <div class="sn-card__actions">
+          <button class="sn-btn sn-btn--secondary" type="button"><svg class="sn-icon"><use href="#i-chat"/></svg>Chat</button>
+          <button class="sn-btn sn-btn--secondary" type="button"><svg class="sn-icon"><use href="#i-plus"/></svg>Aufgabe</button>
+        </div>
+      </article>
+      <article class="sn-card sn-person-card">
+        <div class="sn-person">
+          <span class="sn-avatar" aria-hidden="true">JW<span class="sn-avatar__status"></span></span>
+          <div class="sn-person__body">
+            <p class="sn-person__name">Jonas W.</p>
+            <p class="sn-person__role">Getränke</p>
+            <p class="sn-person__now">Leergut-Automat leeren</p>
+          </div>
+          <span class="sn-chip sn-chip--urgent"><svg class="sn-icon"><use href="#i-clock"/></svg>+12 Min</span>
+        </div>
+      </article>
+      <article class="sn-card sn-person-card">
+        <div class="sn-person">
+          <span class="sn-avatar" aria-hidden="true">LB<span class="sn-avatar__status"></span></span>
+          <div class="sn-person__body">
+            <p class="sn-person__name">Lisa B.</p>
+            <p class="sn-person__role">Kasse 3</p>
+          </div>
+          <span class="sn-chip sn-chip--info"><svg class="sn-icon"><use href="#i-shield"/></svg>Ersthelferin</span>
+        </div>
+      </article>
+
+      <h3 class="sn-section-title">Team <small>wird geladen …</small></h3>
+      <div class="sn-card" aria-busy="true" aria-label="Wird geladen">
+        <div class="sn-row" style="gap:12px"><span class="sn-skel sn-skel--avatar"></span><div style="flex:1"><div class="sn-skel sn-skel--title"></div><div class="sn-skel sn-skel--line" style="width:40%"></div></div></div>
+      </div>
+      <div class="sn-card" aria-hidden="true">
+        <div class="sn-row" style="gap:12px"><span class="sn-skel sn-skel--avatar"></span><div style="flex:1"><div class="sn-skel sn-skel--title" style="width:45%"></div><div class="sn-skel sn-skel--line" style="width:55%"></div></div></div>
+      </div>
+    </div>
+
+    <div class="sn-toast-region" id="toast-lead" aria-live="polite"></div>
+    <button class="sn-fab" type="button"><svg class="sn-icon"><use href="#i-plus"/></svg>Aufgabe</button>
+
+    <nav class="sn-nav" aria-label="Hauptnavigation Leitung">
+      <a class="sn-nav__item" href="#leitung" aria-current="page"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-home"/></svg></span>Live</a>
+      <a class="sn-nav__item" href="#leitung"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-tasks"/></svg></span>Aufgaben</a>
+      <a class="sn-nav__item" href="#chat"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-chat"/></svg><span class="sn-badge">4</span></span>Chat</a>
+      <a class="sn-nav__item" href="#meldung"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-report"/></svg><span class="sn-badge">3</span></span>Meldungen</a>
+      <a class="sn-nav__item" href="#leitung"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-users"/></svg></span>Team</a>
+    </nav>
+  </div>
+  </div>
+  <p class="doc-caption">Eskalation klebt oben (Warnstreifen, nicht nur Farbe). Quittierquote als Balken mit Muster + Zahlen; „Erinnern“ trifft nur die Fehlenden.</p>
+</div>
+
+<!-- ---------------- 3 · Meldung mit Eskalation ---------------- -->
+<div id="meldung">
+  <h2 class="sn-section-title doc-screen-title" style="margin-top:0">3 · Meldung mit Eskalation</h2>
+  <div class="doc-frame">
+  <div class="sn-app" id="app-report">
+    <header class="sn-header">
+      <button class="sn-header__action" type="button" style="margin-left:-8px"><svg class="sn-icon"><use href="#i-back"/></svg>Zurück</button>
+      <div class="sn-header__text">
+        <h3 class="sn-header__title">Meldung #128</h3>
+        <p class="sn-header__sub">Technik · Gang 2</p>
+      </div>
+    </header>
+
+    <div class="sn-main" style="padding-bottom:0">
+      <article class="sn-card sn-card--escalated sn-report">
+        <div class="sn-card__flag"><svg class="sn-icon sn-icon--sm"><use href="#i-escalate"/></svg>Eskaliert · Stufe 3 von 4</div>
+        <div class="sn-chips">
+          <span class="sn-chip sn-chip--urgent">🔥 Dringend</span>
+          <span class="sn-chip sn-chip--outline">Kühlung</span>
+        </div>
+        <h4 class="sn-card__title" style="margin-top:10px">Kühlregal Molkerei 3 zu warm (9 °C)</h4>
+        <p class="sn-card__text">Anzeige blinkt, Joghurt fühlt sich warm an. Ware noch nicht umgelagert.</p>
+        <div class="doc-photo" role="img" aria-label="Foto der Temperaturanzeige: 9,1 Grad"><span>📷 Foto · 09:21</span></div>
+        <dl class="sn-meta">
+          <div class="sn-meta__item"><dt>Gemeldet</dt><dd>Anna M. · 09:21</dd></div>
+          <div class="sn-meta__item"><dt>Zuständig</dt><dd>Thomas K. (Marktleitung)</dd></div>
+        </dl>
+        <div class="sn-row" style="margin-top:8px"><span class="sn-receipt sn-receipt--read">Gelesen 09:37</span><span class="sn-muted" style="font-size:13px">· noch nicht übernommen</span></div>
+      </article>
+
+      <section class="sn-card" aria-label="Reaktionsfrist">
+        <div class="sn-row" style="gap:16px">
+          <div class="sn-ring sn-ring--warn" id="timer-ring" style="--p:56" role="timer" aria-live="off" aria-label="Reaktionsfrist">
+            <span><span class="sn-ring__value" id="timer-value">08:24</span><span class="sn-ring__label">bis Stufe 4</span></span>
+          </div>
+          <div>
+            <p class="sn-hero__title" style="font-size:19px">Reagieren bis 09:56</p>
+            <p class="sn-hero__text">Sonst geht die Meldung automatisch an die Technik-Hotline.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="sn-card" aria-label="Eskalationsverlauf">
+        <h4 class="sn-card__title">Verlauf</h4>
+        <ol class="sn-steps">
+          <li class="sn-steps__item is-done"><span class="sn-steps__dot">1</span><div><p class="sn-steps__title">Gemeldet von Anna M.</p><p class="sn-steps__meta">09:21 · mit Foto</p></div></li>
+          <li class="sn-steps__item is-done"><span class="sn-steps__dot">2</span><div><p class="sn-steps__title">Sandra P. · Abteilungsleitung</p><p class="sn-steps__meta">✓ gesendet 09:21 · ⏰ 15 Min keine Reaktion</p></div></li>
+          <li class="sn-steps__item is-active" aria-current="step"><span class="sn-steps__dot">3</span><div><p class="sn-steps__title">Thomas K. · Marktleitung</p><p class="sn-steps__meta">jetzt · gelesen 09:37</p></div></li>
+          <li class="sn-steps__item"><span class="sn-steps__dot">4</span><div><p class="sn-steps__title">Technik-Hotline</p><p class="sn-steps__meta">automatisch um 09:56</p></div></li>
+        </ol>
+      </section>
+
+      <div class="sn-actionbar">
+        <button class="sn-btn sn-btn--primary sn-btn--lg" type="button" data-toast="Übernommen – Anna M. wird informiert" data-toast-region="toast-report"><svg class="sn-icon"><use href="#i-check"/></svg>Übernehmen</button>
+        <button class="sn-btn sn-btn--secondary sn-btn--lg" type="button" data-sheet-open="sheet-forward"><svg class="sn-icon"><use href="#i-forward"/></svg>Weitergeben</button>
+      </div>
+    </div>
+
+    <div class="sn-toast-region" id="toast-report" aria-live="polite" style="bottom:88px"></div>
+
+    <!-- Bottom-Sheet „Weitergeben an …“ -->
+    <div class="sn-sheet" id="sheet-forward" role="dialog" aria-modal="true" aria-labelledby="sheet-forward-t">
+      <div class="sn-sheet__backdrop" data-sheet-close></div>
+      <div class="sn-sheet__panel">
+        <div class="sn-sheet__handle" aria-hidden="true"></div>
+        <div class="sn-sheet__head">
+          <h4 class="sn-sheet__title" id="sheet-forward-t">Weitergeben an …</h4>
+          <button class="sn-btn sn-btn--ghost" type="button" data-sheet-close><svg class="sn-icon"><use href="#i-x"/></svg>Schließen</button>
+        </div>
+        <div class="sn-sheet__body">
+          <fieldset class="sn-choices">
+            <legend class="sn-label">Wer übernimmt?</legend>
+            <label class="sn-choice"><input type="radio" name="fw" checked><span>Mehmet Y.</span></label>
+            <label class="sn-choice"><input type="radio" name="fw"><span>Haustechnik</span></label>
+            <label class="sn-choice"><input type="radio" name="fw"><span>Sandra P.</span></label>
+          </fieldset>
+          <fieldset class="sn-choices" style="margin-top:16px">
+            <legend class="sn-label">Frist</legend>
+            <label class="sn-choice"><input type="radio" name="fr" checked><span>15 Min</span></label>
+            <label class="sn-choice"><input type="radio" name="fr"><span>1 Std</span></label>
+            <label class="sn-choice"><input type="radio" name="fr"><span>Schichtende</span></label>
+          </fieldset>
+          <div class="sn-field" style="margin-top:16px">
+            <label class="sn-label" for="fw-note">Hinweis <span class="sn-label__hint">(optional)</span></label>
+            <textarea class="sn-textarea" id="fw-note" placeholder="z. B. Ware in Kühlhaus 2 umlagern"></textarea>
+          </div>
+        </div>
+        <div class="sn-sheet__foot">
+          <button class="sn-btn sn-btn--primary sn-btn--lg" type="button" data-sheet-close data-toast="An Mehmet Y. weitergegeben · Frist 15 Min" data-toast-region="toast-report"><svg class="sn-icon"><use href="#i-send"/></svg>Weitergeben</button>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sn-nav" aria-label="Hauptnavigation Leitung">
+      <a class="sn-nav__item" href="#leitung"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-home"/></svg></span>Live</a>
+      <a class="sn-nav__item" href="#leitung"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-tasks"/></svg></span>Aufgaben</a>
+      <a class="sn-nav__item" href="#chat"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-chat"/></svg><span class="sn-badge">4</span></span>Chat</a>
+      <a class="sn-nav__item" href="#meldung" aria-current="page"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-report"/></svg><span class="sn-badge">3</span></span>Meldungen</a>
+      <a class="sn-nav__item" href="#leitung"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-users"/></svg></span>Team</a>
+    </nav>
+  </div>
+  </div>
+  <p class="doc-caption">Wer ist zuständig, wie lange noch, was passiert danach – ohne Scrollen. Aktionen kleben unten in der Daumenzone. „Weitergeben“ öffnet das Bottom-Sheet.</p>
+</div>
+
+<!-- ---------------- 4 · Chat ---------------- -->
+<div id="chat">
+  <h2 class="sn-section-title doc-screen-title" style="margin-top:0">4 · Chat</h2>
+  <div class="doc-frame">
+  <div class="sn-app" id="app-chat" style="min-height:0">
+    <header class="sn-header">
+      <button class="sn-header__action" type="button" style="margin-left:-8px"><svg class="sn-icon"><use href="#i-back"/></svg>Zurück</button>
+      <div class="sn-header__text">
+        <h3 class="sn-header__title">Sandra P.</h3>
+        <p class="sn-header__sub">Abteilungsleitung · im Dienst</p>
+      </div>
+      <button class="sn-header__action" type="button"><svg class="sn-icon"><use href="#i-phone"/></svg>Anrufen</button>
+    </header>
+    <div class="sn-main" style="padding-bottom:16px">
+      <div class="sn-chat" id="chat-list" aria-live="polite">
+        <span class="sn-chat__day">Heute</span>
+        <div class="sn-bubble">
+          <p class="sn-bubble__text">Kannst du nach der Pause die Aktionsware in Gang 7 machen?</p>
+          <div class="sn-bubble__meta">09:02</div>
+        </div>
+        <div class="sn-bubble sn-bubble--out">
+          <p class="sn-bubble__text">Ja, mach ich direkt danach.</p>
+          <div class="sn-bubble__meta">09:03 <span class="sn-receipt sn-receipt--read">gelesen</span></div>
+        </div>
+        <p class="sn-chat__system">📋 Sandra hat dir eine Aufgabe zugewiesen: <strong>Aktionsware Gang 7</strong> · Frist 10:30</p>
+        <div class="sn-bubble sn-bubble--urgent">
+          <span class="sn-bubble__tag">🔥 Dringend · Bitte quittieren</span>
+          <p class="sn-bubble__text">Bitte bis 10 Uhr fertig – um 10:15 kommt die Bezirksleitung.</p>
+          <div class="sn-bubble__ack">
+            <button class="sn-btn sn-btn--primary sn-btn--block" type="button" data-ack-inline><svg class="sn-icon"><use href="#i-check"/></svg>Quittieren</button>
+          </div>
+          <div class="sn-bubble__meta">09:40</div>
+        </div>
+        <div class="sn-bubble sn-bubble--out">
+          <p class="sn-bubble__text">Foto vom Regal kommt gleich.</p>
+          <div class="sn-bubble__meta">09:41 <span class="sn-receipt sn-receipt--sent">gesendet</span></div>
+        </div>
+      </div>
+    </div>
+    <form class="sn-composer" id="chat-form" autocomplete="off">
+      <button class="sn-btn sn-btn--icon" type="button"><svg class="sn-icon"><use href="#i-mic"/></svg>Sprechen</button>
+      <label class="sn-sr-only" for="chat-input">Nachricht</label>
+      <input class="sn-input" id="chat-input" placeholder="Nachricht …" enterkeyhint="send">
+      <button class="sn-btn sn-btn--primary sn-btn--icon" type="submit"><svg class="sn-icon"><use href="#i-send"/></svg>Senden</button>
+    </form>
+  </div>
+  </div>
+  <p class="doc-caption">Lesehaken immer mit Wort: ✓ gesendet · ✓✓ gelesen · ✓✓ quittiert (grün hinterlegt). Dringende Nachrichten tragen Quittierpflicht direkt in der Blase.</p>
+</div>
+
+<!-- ---------------- 5 · SOS ---------------- -->
+<div id="sos">
+  <h2 class="sn-section-title doc-screen-title" style="margin-top:0">5 · SOS</h2>
+  <div class="doc-frame">
+  <div class="sn-app" id="app-sos">
+    <header class="sn-header">
+      <span class="sn-header__logo" aria-hidden="true"><svg><use href="#i-logo"/></svg></span>
+      <div class="sn-header__text">
+        <h3 class="sn-header__title">Notfall</h3>
+        <p class="sn-header__sub">Bei Lebensgefahr immer zuerst 112</p>
+      </div>
+    </header>
+
+    <div class="sn-alert sn-alert--sos sn-alert--sticky" role="alert">
+      <span class="sn-alert__icon"><svg class="sn-icon"><use href="#i-sos"/></svg></span>
+      <p class="sn-alert__title">SOS · Kasse 3 · Kreislauf</p>
+      <p class="sn-alert__text">Lisa B. · vor 40 Sek. · Kunde kollabiert</p>
+      <div class="sn-alert__actions">
+        <button class="sn-btn sn-btn--on-accent sn-btn--lg" type="button" data-toast="Lisa sieht: Du kommst" data-toast-region="toast-sos"><svg class="sn-icon"><use href="#i-run"/></svg>Ich komme</button>
+        <a class="sn-btn sn-btn--on-accent-outline sn-btn--lg" href="tel:112"><svg class="sn-icon"><use href="#i-phone"/></svg>112 anrufen</a>
+      </div>
+    </div>
+
+    <div class="sn-main">
+      <h3 class="sn-section-title doc-screen-title" style="margin-top:0">Wer reagiert? <small>2 kommen</small></h3>
+      <ul class="sn-list">
+        <li class="sn-list__item"><span class="sn-avatar" aria-hidden="true">MY</span><div class="sn-list__body"><p class="sn-list__title">Mehmet Y. ⛑</p><p class="sn-list__sub">Ersthelfer · ca. 40 m</p></div><span class="sn-chip sn-chip--ok"><svg class="sn-icon"><use href="#i-run"/></svg>kommt</span></li>
+        <li class="sn-list__item"><span class="sn-avatar sn-avatar--lead" aria-hidden="true">TK</span><div class="sn-list__body"><p class="sn-list__title">Thomas K.</p><p class="sn-list__sub">Marktleitung</p></div><span class="sn-receipt sn-receipt--ack">quittiert</span></li>
+        <li class="sn-list__item"><span class="sn-avatar" aria-hidden="true">SP</span><div class="sn-list__body"><p class="sn-list__title">Sandra P.</p><p class="sn-list__sub">Abteilungsleitung</p></div><span class="sn-receipt sn-receipt--read">gelesen</span></li>
+      </ul>
+
+      <h3 class="sn-section-title">Selbst SOS senden</h3>
+      <div class="sn-card">
+        <fieldset class="sn-choices">
+          <legend class="sn-label">Was ist passiert?</legend>
+          <label class="sn-choice"><input type="radio" name="sos" checked><span>⛑ Erste Hilfe</span></label>
+          <label class="sn-choice"><input type="radio" name="sos"><span>🔥 Brand/Rauch</span></label>
+          <label class="sn-choice"><input type="radio" name="sos"><span>Bedrohung</span></label>
+          <label class="sn-choice"><input type="radio" name="sos"><span>Diebstahl</span></label>
+        </fieldset>
+        <div style="margin-top:16px">
+          <button class="sn-btn sn-btn--ack sn-btn--hold" type="button" id="sos-hold" data-toast-region="toast-sos">
+            <svg class="sn-icon"><use href="#i-sos"/></svg><span data-hold-label>Halten: SOS senden</span>
+          </button>
+          <p class="doc-hold-hint">2 Sekunden gedrückt halten – verhindert Fehlalarm in der Tasche.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sn-toast-region" id="toast-sos" aria-live="assertive"></div>
+
+    <nav class="sn-nav" aria-label="Hauptnavigation">
+      <a class="sn-nav__item" href="#mitarbeiter"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-home"/></svg></span>Start</a>
+      <a class="sn-nav__item" href="#mitarbeiter"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-tasks"/></svg><span class="sn-badge">3</span></span>Aufgaben</a>
+      <a class="sn-nav__item" href="#chat"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-chat"/></svg><span class="sn-badge">2</span></span>Chat</a>
+      <a class="sn-nav__item" href="#meldung"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-report"/></svg></span>Meldungen</a>
+      <a class="sn-nav__item" href="#bausteine"><span class="sn-nav__icon"><svg class="sn-icon"><use href="#i-menu"/></svg></span>Mehr</a>
+    </nav>
+  </div>
+  </div>
+  <p class="doc-caption">SOS-Banner liegt über allem (z-sos), pulsiert (ohne Puls bei reduzierter Bewegung). Senden nur per Halten – mit Füllbalken als Rückmeldung.</p>
+</div>
+
+</div>
+</section>
+
+<!-- ============================================================
+     6 · Bausteine
+     ============================================================ -->
+<section class="doc-section" id="bausteine">
+  <h2>6 · Bausteine</h2>
+  <p>Alle Komponenten einzeln, mit Klassennamen. Jede Variante funktioniert hell und dunkel.</p>
+  <div class="doc-grid">
+
+    <div class="doc-box">
+      <h3>Buttons <small>.sn-btn --primary --secondary --ghost --danger --ack</small></h3>
+      <div class="sn-stack">
+        <button class="sn-btn sn-btn--primary sn-btn--block sn-btn--lg" type="button"><svg class="sn-icon"><use href="#i-plus"/></svg>Aufgabe anlegen</button>
+        <div class="sn-row">
+          <button class="sn-btn sn-btn--secondary" type="button" style="flex:1"><svg class="sn-icon"><use href="#i-forward"/></svg>Weitergeben</button>
+          <button class="sn-btn sn-btn--ghost" type="button" style="flex:1">Abbrechen</button>
+        </div>
+        <div class="sn-row">
+          <button class="sn-btn sn-btn--danger" type="button" style="flex:1"><svg class="sn-icon"><use href="#i-x"/></svg>SOS beenden</button>
+          <button class="sn-btn sn-btn--primary" type="button" disabled style="flex:1">Gesperrt</button>
+        </div>
+        <button class="sn-btn sn-btn--ack" type="button" data-ack data-toast-region="toast-doc"><svg class="sn-icon"><use href="#i-check"/></svg><span>Quittieren</span></button>
+        <button class="sn-btn sn-btn--ack is-done" type="button" aria-pressed="true"><svg class="sn-icon"><use href="#i-check"/></svg><span>Quittiert · 09:15</span></button>
+        <div class="sn-row">
+          <button class="sn-btn sn-btn--icon" type="button"><svg class="sn-icon"><use href="#i-camera"/></svg>Foto</button>
+          <button class="sn-btn sn-btn--icon" type="button"><svg class="sn-icon"><use href="#i-mic"/></svg>Sprechen</button>
+          <button class="sn-btn sn-btn--icon" type="button"><svg class="sn-icon"><use href="#i-phone"/></svg>Anrufen</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-box">
+      <h3>Status &amp; Lesestatus <small>.sn-chip · .sn-receipt · .sn-deadline</small></h3>
+      <div class="sn-chips">
+        <span class="sn-chip sn-chip--urgent">🔥 Dringend</span>
+        <span class="sn-chip sn-chip--escalated"><svg class="sn-icon"><use href="#i-escalate"/></svg>Eskaliert</span>
+        <span class="sn-chip sn-chip--warn"><svg class="sn-icon"><use href="#i-clock"/></svg>Frist bald</span>
+        <span class="sn-chip sn-chip--ok"><svg class="sn-icon"><use href="#i-check"/></svg>Erledigt</span>
+        <span class="sn-chip sn-chip--info"><svg class="sn-icon"><use href="#i-play"/></svg>Läuft</span>
+        <span class="sn-chip">Offen</span>
+        <span class="sn-chip sn-chip--outline">Drogerie</span>
+        <span class="sn-chip sn-chip--solid">Neu</span>
+      </div>
+      <hr class="sn-divider">
+      <div class="sn-chips" style="gap:12px">
+        <span class="sn-receipt sn-receipt--sent">gesendet 09:12</span>
+        <span class="sn-receipt sn-receipt--read">gelesen 09:14</span>
+        <span class="sn-receipt sn-receipt--ack">quittiert 09:15</span>
+      </div>
+      <hr class="sn-divider">
+      <div class="sn-stack">
+        <div class="sn-deadline"><svg class="sn-icon sn-icon--sm"><use href="#i-clock"/></svg>bis 13:00 · noch 3 Std</div>
+        <div class="sn-deadline sn-deadline--soon"><svg class="sn-icon sn-icon--sm"><use href="#i-clock"/></svg>⏳ bis 10:00 · noch 13 Min</div>
+        <div class="sn-deadline sn-deadline--overdue"><svg class="sn-icon sn-icon--sm"><use href="#i-report"/></svg>überfällig seit 12 Min</div>
+      </div>
+      <hr class="sn-divider">
+      <div class="sn-row" style="gap:16px">
+        <span class="sn-avatar">AM<span class="sn-avatar__status"></span></span>
+        <span class="sn-avatar">MY<span class="sn-avatar__status sn-avatar__status--pause"></span></span>
+        <span class="sn-avatar">JW<span class="sn-avatar__status sn-avatar__status--off"></span></span>
+        <span class="sn-muted" style="font-size:14px">● aktiv · ■ Pause · ○ abwesend</span>
+      </div>
+    </div>
+
+    <div class="doc-box">
+      <h3>Fortschritt &amp; Timer <small>.sn-ring --ok --warn --danger · .sn-progress</small></h3>
+      <div class="sn-row" style="gap:14px; flex-wrap:wrap">
+        <div class="sn-ring sn-ring--ok" style="--p:80"><span><span class="sn-ring__value">80%</span><span class="sn-ring__label">Schicht</span></span></div>
+        <div class="sn-ring sn-ring--warn" style="--p:30"><span><span class="sn-ring__value">13′</span><span class="sn-ring__label">bis Frist</span></span></div>
+        <div class="sn-ring sn-ring--danger" style="--p:100"><span><span class="sn-ring__value">+4′</span><span class="sn-ring__label">überfällig</span></span></div>
+      </div>
+      <div style="margin-top:16px; padding:16px; border-radius:16px; background:var(--sn-accent); display:flex; gap:16px; align-items:center; color:#fff">
+        <div class="sn-ring sn-ring--lg sn-ring--on-accent" style="--p:62"><span><span class="sn-ring__value">5/8</span><span class="sn-ring__label">Aufgaben</span></span></div>
+        <div style="font-weight:600">Variante auf Rot, z. B. für die Schichtübergabe.</div>
+      </div>
+      <div class="sn-progress" style="margin-top:16px; --p:39" role="progressbar" aria-valuenow="39" aria-valuemin="0" aria-valuemax="100" aria-label="Inventur Gang 4"><div class="sn-progress__bar"></div></div>
+      <p class="sn-field__help" style="margin-top:6px">Inventur Gang 4 · 39 %</p>
+    </div>
+
+    <div class="doc-box">
+      <h3>Segment-Tabs <small>.sn-segment · role="tablist"</small></h3>
+      <div class="sn-segment" role="tablist" aria-label="Meldungen filtern">
+        <button class="sn-segment__tab" role="tab" aria-selected="true" type="button">Offen <span class="sn-badge">3</span></button>
+        <button class="sn-segment__tab" role="tab" aria-selected="false" type="button" tabindex="-1">Meine</button>
+        <button class="sn-segment__tab" role="tab" aria-selected="false" type="button" tabindex="-1">Erledigt</button>
+      </div>
+      <h3 style="margin-top:24px">Schnellaktionen <small>.sn-tiles · .sn-tile --sos --wide</small></h3>
+      <div class="sn-tiles">
+        <button class="sn-tile" type="button"><svg class="sn-icon sn-icon--lg sn-tile__icon"><use href="#i-bell"/></svg><span class="sn-tile__label">Rundruf</span><span class="sn-badge">2</span></button>
+        <button class="sn-tile" type="button"><svg class="sn-icon sn-icon--lg sn-tile__icon"><use href="#i-tasks"/></svg><span class="sn-tile__label">Verteilen</span></button>
+        <button class="sn-tile sn-tile--wide" type="button"><svg class="sn-icon sn-icon--lg sn-tile__icon"><use href="#i-forward"/></svg><span><span class="sn-tile__label">Schichtübergabe</span><span class="sn-tile__sub">7 offene Punkte an Spätschicht</span></span></button>
+      </div>
+    </div>
+
+    <div class="doc-box">
+      <h3>Formular <small>.sn-field .sn-input .sn-select .sn-choice .sn-check .sn-switch</small></h3>
+      <div class="sn-field">
+        <label class="sn-label" for="f-title">Was soll gemacht werden?</label>
+        <input class="sn-input" id="f-title" value="Leergut-Automat leeren">
+        <p class="sn-field__help">Kurz und konkret – erscheint als Kartentitel.</p>
+      </div>
+      <div class="sn-field">
+        <label class="sn-label" for="f-dept">Abteilung</label>
+        <select class="sn-select" id="f-dept"><option>Getränke</option><option>Drogerie</option><option>Obst &amp; Gemüse</option><option>Kasse</option></select>
+      </div>
+      <div class="sn-field is-invalid">
+        <label class="sn-label" for="f-who">Zuständig</label>
+        <input class="sn-input" id="f-who" placeholder="Name oder Abteilung" aria-invalid="true" aria-describedby="f-who-e">
+        <p class="sn-field__error" id="f-who-e"><svg class="sn-icon sn-icon--sm"><use href="#i-report"/></svg>Bitte eine Person oder Abteilung wählen.</p>
+      </div>
+      <div class="sn-field">
+        <span class="sn-label">Dringlichkeit</span>
+        <div class="sn-choices" role="radiogroup" aria-label="Dringlichkeit">
+          <label class="sn-choice"><input type="radio" name="prio" checked><span>Normal</span></label>
+          <label class="sn-choice"><input type="radio" name="prio"><span>🔥 Dringend</span></label>
+        </div>
+      </div>
+      <div class="sn-field">
+        <label class="sn-check"><input type="checkbox" checked>Quittierung verlangen</label>
+        <label class="sn-switch">Foto als Nachweis<input type="checkbox" role="switch"></label>
+      </div>
+    </div>
+
+    <div class="doc-box doc-box--plain">
+      <h3>Bottom-Sheet <small>.sn-sheet (hier statisch: --static)</small></h3>
+      <div class="sn-sheet sn-sheet--static" role="dialog" aria-labelledby="sh2-t">
+        <div class="sn-sheet__panel" style="border-radius:24px">
+          <div class="sn-sheet__handle" aria-hidden="true"></div>
+          <div class="sn-sheet__head">
+            <h4 class="sn-sheet__title" id="sh2-t">Pause starten?</h4>
+            <button class="sn-btn sn-btn--ghost" type="button"><svg class="sn-icon"><use href="#i-x"/></svg>Schließen</button>
+          </div>
+          <div class="sn-sheet__body"><p style="margin:0">15 Minuten. Deine Leitung sieht „Pause bis 10:05“. Offene dringende Aufgaben: <strong>1</strong>.</p></div>
+          <div class="sn-sheet__foot">
+            <button class="sn-btn sn-btn--secondary" type="button">Später</button>
+            <button class="sn-btn sn-btn--primary" type="button"><svg class="sn-icon"><use href="#i-coffee"/></svg>Pause starten</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-box">
+      <h3>Toast <small>.sn-toast --ok --error --info</small></h3>
+      <div class="sn-stack">
+        <div class="sn-toast sn-toast--static sn-toast--ok" role="status"><span class="sn-toast__icon"><svg class="sn-icon"><use href="#i-check"/></svg></span><span class="sn-toast__text">Quittiert – Leitung sieht es sofort</span><button class="sn-toast__action" type="button">Rückgängig</button></div>
+        <div class="sn-toast sn-toast--static sn-toast--error" role="status"><span class="sn-toast__icon"><svg class="sn-icon"><use href="#i-x"/></svg></span><span class="sn-toast__text">Kein Netz – wird gesendet, sobald WLAN da ist</span></div>
+        <div class="sn-toast sn-toast--static sn-toast--info" role="status"><span class="sn-toast__icon"><svg class="sn-icon"><use href="#i-bell"/></svg></span><span class="sn-toast__text">Neue Aufgabe von Sandra P.</span><button class="sn-toast__action" type="button">Öffnen</button></div>
+        <button class="sn-btn sn-btn--secondary sn-btn--block" type="button" data-toast="So erscheint ein Toast – 4 Sekunden" data-toast-region="toast-doc">Toast auslösen</button>
+      </div>
+    </div>
+
+    <div class="doc-box">
+      <h3>Banner <small>.sn-alert --sos --escalation --warn --info</small></h3>
+      <div class="sn-stack">
+        <div class="sn-alert sn-alert--sos sn-alert--card"><span class="sn-alert__icon"><svg class="sn-icon"><use href="#i-sos"/></svg></span><p class="sn-alert__title">SOS · Lager hinten</p><p class="sn-alert__text">Jonas W. · vor 10 Sek.</p></div>
+        <div class="sn-alert sn-alert--escalation sn-alert--card"><span class="sn-alert__icon"><svg class="sn-icon"><use href="#i-escalate"/></svg></span><p class="sn-alert__title">Eskaliert: Kasse 5 ohne Wechselgeld</p><p class="sn-alert__text">Stufe 2 · seit 6 Min</p></div>
+        <div class="sn-alert sn-alert--warn sn-alert--card"><span class="sn-alert__icon"><svg class="sn-icon"><use href="#i-clock"/></svg></span><p class="sn-alert__title">Pause überzogen</p><p class="sn-alert__text">3 Personen mehr als 5 Min</p></div>
+        <div class="sn-alert sn-alert--info sn-alert--card"><span class="sn-alert__icon"><svg class="sn-icon"><use href="#i-bell"/></svg></span><p class="sn-alert__title">Lieferung 11:30</p><p class="sn-alert__text">2 LKW · Rampe 1 freihalten</p></div>
+      </div>
+    </div>
+
+    <div class="doc-box doc-box--plain">
+      <h3>Leere Zustände <small>.sn-empty --ok</small></h3>
+      <div class="sn-stack">
+        <div class="sn-empty sn-empty--ok">
+          <span class="sn-empty__icon"><svg class="sn-icon"><use href="#i-check"/></svg></span>
+          <p class="sn-empty__title">Alles erledigt</p>
+          <p class="sn-empty__text">Starke Schicht! Neue Aufgaben erscheinen hier sofort.</p>
+        </div>
+        <div class="sn-empty">
+          <span class="sn-empty__icon"><svg class="sn-icon"><use href="#i-inbox"/></svg></span>
+          <p class="sn-empty__title">Keine offenen Meldungen</p>
+          <p class="sn-empty__text">Siehst du ein Problem? Mit Foto dauert es 10 Sekunden.</p>
+          <button class="sn-btn sn-btn--primary" type="button"><svg class="sn-icon"><use href="#i-camera"/></svg>Problem melden</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-box doc-box--plain">
+      <h3>Skeleton <small>.sn-skel --title --line --avatar --btn</small></h3>
+      <div class="sn-card" aria-busy="true" aria-label="Aufgabe wird geladen">
+        <div class="sn-skel sn-skel--title"></div>
+        <div class="sn-skel sn-skel--line"></div>
+        <div class="sn-skel sn-skel--line" style="width:70%"></div>
+        <div class="sn-skel sn-skel--btn"></div>
+      </div>
+    </div>
+
+  </div>
+  <div class="sn-toast-region" id="toast-doc" aria-live="polite" style="position:fixed; left:12px; right:12px; bottom:16px; max-width:456px; margin:0 auto"></div>
+</section>
+
+<!-- ============================================================
+     7 · Kontraste (live berechnet)
+     ============================================================ -->
+<section class="doc-section" id="kontrast">
+  <h2>7 · Kontraste</h2>
+  <p>Live aus den aktuellen Tokens berechnet (WCAG 2.1). Ziel: Text ≥ 4,5 : 1, Bedienelement-Kanten ≥ 3 : 1.</p>
+  <div class="doc-box" style="overflow-x:auto">
+    <table class="doc-contrast" id="contrast-table">
+      <thead><tr><th>Paar</th><th>Muster</th><th>Verhältnis</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var root = document.documentElement;
+
+  /* ---------- Darstellung: Auto / Hell / Dunkel ---------- */
+  var themeBtns = document.querySelectorAll('[data-theme-set]');
+  function applyTheme(mode) {
+    if (mode === 'light' || mode === 'dark') root.setAttribute('data-theme', mode);
+    else root.removeAttribute('data-theme');
+    themeBtns.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.themeSet === mode)); });
+    try { localStorage.setItem('sn-theme', mode); } catch (e) {}
+    renderContrast();
+  }
+  themeBtns.forEach(function (b) { b.addEventListener('click', function () { applyTheme(b.dataset.themeSet); }); });
+
+  /* ---------- Toast ---------- */
+  var ICON = { ok: 'i-check', error: 'i-x', info: 'i-bell' };
+  function toast(regionId, text, kind) {
+    var region = document.getElementById(regionId);
+    if (!region) return;
+    kind = kind || 'ok';
+    var el = document.createElement('div');
+    el.className = 'sn-toast sn-toast--' + kind;
+    el.setAttribute('role', 'status');
+    el.innerHTML = '<span class="sn-toast__icon"><svg class="sn-icon"><use href="#' + ICON[kind] + '"/></svg></span><span class="sn-toast__text"></span>';
+    el.querySelector('.sn-toast__text').textContent = text;
+    region.innerHTML = '';
+    region.appendChild(el);
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 4000);
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-toast]');
+    if (t) toast(t.dataset.toastRegion || 'toast-doc', t.dataset.toast, 'ok');
+  });
+
+  /* ---------- Segment-Tabs (Pfeiltasten + Klick) ---------- */
+  document.querySelectorAll('[role="tablist"]').forEach(function (list) {
+    var tabs = Array.prototype.slice.call(list.querySelectorAll('[role="tab"]'));
+    function select(tab) {
+      tabs.forEach(function (t) {
+        var on = t === tab;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        var p = t.getAttribute('aria-controls');
+        if (p && document.getElementById(p)) document.getElementById(p).hidden = !on;
+      });
+    }
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () { select(t); });
+      t.addEventListener('keydown', function (e) {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        var n = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+        select(n); n.focus();
+      });
+    });
+  });
+
+  /* ---------- Quittieren (+ Live-Zähler Leitung) ---------- */
+  function now() { var d = new Date(); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function updateAckbar(id, delta) {
+    var bar = document.getElementById(id);
+    if (!bar) return;
+    var total = +bar.dataset.total, ack = +bar.dataset.ack + delta, read = Math.max(0, +bar.dataset.read - delta);
+    bar.dataset.ack = ack; bar.dataset.read = read;
+    var sent = total - ack - read;
+    bar.querySelectorAll('[data-ack-count]').forEach(function (n) { n.textContent = ack; });
+    bar.querySelectorAll('[data-read-count]').forEach(function (n) { n.textContent = read; });
+    bar.querySelector('[data-ack-pct]').textContent = Math.round(ack / total * 100) + ' %';
+    bar.querySelector('[data-missing-count]').textContent = total - ack;
+    var segs = bar.querySelectorAll('.sn-ackbar__seg');
+    segs[0].style.setProperty('--n', ack); segs[1].style.setProperty('--n', read); segs[2].style.setProperty('--n', sent);
+    bar.querySelector('[data-ack-bar]').setAttribute('aria-label', ack + ' quittiert, ' + read + ' gelesen, ' + sent + ' nur gesendet');
+  }
+  document.querySelectorAll('[data-ack]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (btn.classList.contains('is-done')) return;
+      btn.classList.add('is-done');
+      btn.setAttribute('aria-pressed', 'true');
+      btn.querySelector('span').textContent = 'Quittiert · ' + now();
+      var card = btn.closest('.sn-message');
+      if (card) {
+        card.classList.remove('sn-card--urgent'); card.classList.add('is-acked');
+        var flag = card.querySelector('.sn-card__flag');
+        if (flag) flag.remove();
+      }
+      if (btn.dataset.ackTarget) updateAckbar(btn.dataset.ackTarget, 1);
+      toast(btn.dataset.toastRegion || 'toast-doc', 'Quittiert – Leitung sieht es sofort', 'ok');
+    });
+  });
+  document.querySelectorAll('[data-ack-inline]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var wrap = btn.parentNode;
+      wrap.innerHTML = '<span class="sn-receipt sn-receipt--ack">quittiert ' + now() + '</span>';
+    });
+  });
+
+  /* ---------- Bottom-Sheet ---------- */
+  var lastFocus = null;
+  function openSheet(sheet) {
+    lastFocus = document.activeElement;
+    sheet.classList.add('is-open');
+    var f = sheet.querySelector('input, button, textarea, select');
+    setTimeout(function () { if (f) f.focus({ preventScroll: true }); sheet.querySelector('.sn-sheet__panel').scrollIntoView({ block: 'end', behavior: 'smooth' }); }, 50);
+  }
+  function closeSheet(sheet) {
+    sheet.classList.remove('is-open');
+    if (lastFocus) lastFocus.focus({ preventScroll: true });
+  }
+  document.querySelectorAll('[data-sheet-open]').forEach(function (b) {
+    b.addEventListener('click', function () { openSheet(document.getElementById(b.dataset.sheetOpen)); });
+  });
+  document.querySelectorAll('.sn-sheet').forEach(function (s) {
+    s.querySelectorAll('[data-sheet-close]').forEach(function (c) { c.addEventListener('click', function () { closeSheet(s); }); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var open = document.querySelector('.sn-sheet.is-open');
+    if (open) closeSheet(open);
+  });
+
+  /* ---------- Reaktions-Timer ---------- */
+  var ring = document.getElementById('timer-ring'), val = document.getElementById('timer-value');
+  var left = 8 * 60 + 24, total = 15 * 60;
+  setInterval(function () {
+    if (left <= 0) return;
+    left--;
+    var m = Math.floor(left / 60), s = left % 60;
+    val.textContent = ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2);
+    ring.style.setProperty('--p', Math.round(left / total * 100));
+    ring.classList.toggle('sn-ring--warn', left > 120);
+    ring.classList.toggle('sn-ring--danger', left <= 120);
+  }, 1000);
+
+  /* ---------- SOS: 2 s halten ---------- */
+  var hold = document.getElementById('sos-hold'), holdLabel = hold.querySelector('[data-hold-label]');
+  var holdStart = 0, raf = 0, HOLD_MS = 2000, sent = false;
+  function tick(ts) {
+    var p = Math.min(1, (ts - holdStart) / HOLD_MS);
+    hold.style.setProperty('--hold', p);
+    if (p >= 1) { finish(); return; }
+    raf = requestAnimationFrame(tick);
+  }
+  function startHold(e) {
+    if (sent) return;
+    if (e.type === 'keydown' && (e.repeat || (e.key !== 'Enter' && e.key !== ' '))) return;
+    e.preventDefault();
+    holdStart = performance.now();
+    holdLabel.textContent = 'Weiter halten …';
+    raf = requestAnimationFrame(tick);
+  }
+  function cancelHold() {
+    if (sent) return;
+    cancelAnimationFrame(raf);
+    hold.style.setProperty('--hold', 0);
+    holdLabel.textContent = 'Halten: SOS senden';
+  }
+  function finish() {
+    sent = true;
+    if (navigator.vibrate) { try { navigator.vibrate(200); } catch (e) {} }
+    hold.classList.add('is-done');
+    hold.style.setProperty('--hold', 0);
+    holdLabel.textContent = 'SOS gesendet · ' + now();
+    toast('toast-sos', 'SOS an 6 Personen gesendet · Ersthelfer zuerst', 'error');
+  }
+  hold.addEventListener('pointerdown', startHold);
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (t) { hold.addEventListener(t, cancelHold); });
+  hold.addEventListener('keydown', startHold);
+  hold.addEventListener('keyup', cancelHold);
+  hold.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+  /* ---------- Chat senden ---------- */
+  var form = document.getElementById('chat-form'), input = document.getElementById('chat-input'), list = document.getElementById('chat-list');
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var text = input.value.trim();
+    if (!text) return;
+    var b = document.createElement('div');
+    b.className = 'sn-bubble sn-bubble--out';
+    b.innerHTML = '<p class="sn-bubble__text"></p><div class="sn-bubble__meta">' + now() + ' <span class="sn-receipt sn-receipt--sent">gesendet</span></div>';
+    b.querySelector('p').textContent = text;
+    list.appendChild(b);
+    input.value = '';
+    setTimeout(function () { var r = b.querySelector('.sn-receipt'); r.className = 'sn-receipt sn-receipt--read'; r.textContent = 'gelesen'; }, 1500);
+  });
+
+  /* ---------- Kontrast-Tabelle ---------- */
+  function parse(c) {
+    var m = c.match(/rgba?\(([^)]+)\)/); if (!m) return [0, 0, 0];
+    return m[1].split(',').slice(0, 3).map(function (x) { return parseFloat(x); });
+  }
+  function lum(rgb) {
+    var a = rgb.map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+  }
+  function ratio(f, b) { var l1 = lum(f), l2 = lum(b); return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05); }
+  var probe = document.createElement('span'); probe.style.display = 'none'; document.body.appendChild(probe);
+  function tok(name) { probe.style.color = 'var(' + name + ')'; return getComputedStyle(probe).color; }
+  var PAIRS = [
+    ['Haupttext auf Hintergrund', '--sn-text', '--sn-bg', 4.5],
+    ['Haupttext auf Karte', '--sn-text', '--sn-surface', 4.5],
+    ['Sekundärtext auf Hintergrund', '--sn-text-muted', '--sn-bg', 4.5],
+    ['Sekundärtext auf Karte', '--sn-text-muted', '--sn-surface', 4.5],
+    ['Kopfzeile: Weiß auf Rot', '--sn-header-text', '--sn-header-bg', 4.5],
+    ['Primär-Button: Weiß auf Rot', '--sn-on-accent', '--sn-accent', 4.5],
+    ['Roter Akzenttext auf Karte', '--sn-accent-text', '--sn-surface', 4.5],
+    ['Nav aktiv auf Nav', '--sn-nav-active', '--sn-nav-bg', 4.5],
+    ['Nav inaktiv auf Nav', '--sn-nav-text', '--sn-nav-bg', 4.5],
+    ['Dringend (Chip)', '--sn-urgent-fg', '--sn-urgent-bg', 4.5],
+    ['Warnung (Chip)', '--sn-warn-fg', '--sn-warn-bg', 4.5],
+    ['OK / quittiert (Chip)', '--sn-ok-fg', '--sn-ok-bg', 4.5],
+    ['Info / gelesen (Chip)', '--sn-info-fg', '--sn-info-bg', 4.5],
+    ['Neutral (Chip)', '--sn-neutral-fg', '--sn-neutral-bg', 4.5],
+    ['Formular-Rand auf Karte', '--sn-border-strong', '--sn-surface', 3],
+    ['Fokusring auf Hintergrund', '--sn-focus', '--sn-bg', 3]
+  ];
+  function renderContrast() {
+    var tb = document.querySelector('#contrast-table tbody'); if (!tb) return;
+    tb.innerHTML = '';
+    var out = [];
+    PAIRS.forEach(function (p) {
+      var fg = tok(p[1]), bg = tok(p[2]), r = ratio(parse(fg), parse(bg));
+      var ok = r >= p[3];
+      out.push({ pair: p[0], fg: p[1], bg: p[2], ratio: Math.round(r * 100) / 100, min: p[3], pass: ok });
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td></td><td><span class="doc-sample">Aa 12</span></td><td></td>';
+      tr.cells[0].textContent = p[0];
+      tr.cells[1].firstChild.style.color = fg; tr.cells[1].firstChild.style.background = bg;
+      tr.cells[2].textContent = r.toFixed(2).replace('.', ',') + ' : 1 ' + (ok ? '✓' : '✗ unter ' + p[3]);
+      tb.appendChild(tr);
+    });
+    window.__snContrast = out;
+  }
+
+  var saved = 'auto';
+  try { saved = localStorage.getItem('sn-theme') || 'auto'; } catch (e) {}
+  applyTheme(saved);
+  if (window.matchMedia) {
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    if (mq.addEventListener) mq.addEventListener('change', renderContrast);
+  }
+})();
+</script>
+</body>
+</html>
