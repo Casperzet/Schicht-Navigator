@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Schicht-Navigator: Aufträge, Meldungen, Rufe und Chat für die Filiale – mit Quittung und Eskalation.">
+<title>Schicht-Navigator</title>
+<style>/*CSS*/</style>
+</head>
+<body>
+<!-- Icon-Sprite: build.js setzt hier src/ui/icons.svg ein (falls vorhanden) -->
+<svg id="sn-sprite" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-logo" viewBox="0 0 24 24"><path d="M4 3.5 21 12 4 20.5 8 12z"/></symbol>
+  <!--SPRITE-->
+</svg>
+<div class="sn-app" id="app">
+  <header class="sn-header" id="header">
+    <span class="sn-header__logo" aria-hidden="true"><svg><use href="#i-logo"/></svg></span>
+    <div class="sn-header__text">
+      <h1 class="sn-header__title" id="hdr-title">Schicht-Navigator</h1>
+      <p class="sn-header__sub" id="hdr-sub"></p>
+    </div>
+    <span class="sn-conn" id="hdr-status" role="status" aria-live="polite"></span>
+    <button class="sn-header__action sn-sos-btn" id="sos" type="button" data-act="sos" hidden>SOS</button>
+  </header>
+  <div class="sn-banners" id="banners" aria-live="assertive"></div>
+  <main class="sn-main" id="view" tabindex="-1">
+    <p class="sn-boot">Schicht-Navigator wird geladen …</p>
+  </main>
+  <button class="sn-fab" id="fab" type="button" hidden></button>
+  <nav class="sn-nav" id="nav" aria-label="Hauptnavigation"></nav>
+  <div class="sn-toast-region" id="toast" aria-live="polite"></div>
+  <div class="sn-sheet" id="sheet" aria-hidden="true">
+    <div class="sn-sheet__backdrop" data-act="sheet-close"></div>
+    <div class="sn-sheet__panel" id="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title"></div>
+  </div>
+</div>
+<noscript>Bitte JavaScript aktivieren, um den Schicht-Navigator zu nutzen.</noscript>
+<script>/*JS*/</script>
+</body>
+</html>
