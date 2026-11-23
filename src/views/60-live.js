@@ -69,8 +69,9 @@
   }
 
   const fab = () => ({ label: 'Senden', icon: 'send', act: 'send-sheet' });
-  ui.registerView('live', { label: 'Live', icon: 'users', groups: ['admin'], order: 10, render, fab,
-    badge: (me) => C.hotspots(SN.clock.now()).filter((h) => h.level >= 2).length });
+  // Admin: „Live“ ist in die Übersicht (Anwesenheit) gewandert und nur noch ohne Navigationsplatz erreichbar
+  ui.registerView('live', { label: 'Live', icon: 'users', groups: ['admin'], order: 11, render, fab, show: () => false });
+  SN.parts.livePerson = person;
   ui.registerView('team', { label: 'Team', icon: 'users', groups: ['lead'], order: 22, render, fab, show: () => false });
 
   ui.onChange('live-q', (el) => ui.sub('liveQ', el.value));
