@@ -29,21 +29,56 @@
     { key: 'other', label: 'Sonstiges', icon: 'camera' },
   ];
   const PHOTO_CAT = Object.fromEntries(PHOTO_CATS.map((c) => [c.key, c]));
-  /** Empfänger: Filialleitung im Dienst, sonst alle; optional Admin vom Dienst */
-  function photoTargets(to, now) {
-    now = now0(now);
-    if (to === 'admin') return [M.adminOnDuty(now)].filter(Boolean);
+  /** Filialleitung im Dienst, sonst alle Filialleitungen */
+  function flIds(now) {
     const fl = M.staff().filter((e) => e.role === 'fl' || e.role === 'sfl');
     const on = fl.filter((e) => M.onDuty(e, now)).map((e) => e.id);
     return on.length ? on : fl.map((e) => e.id);
   }
-  /** opts {cat, dept, body, orig, photos[], u, to: 'fl'|'admin'} */
+  /**
+   * Wohin darf `me` ein Foto schicken? Immer entlang der Hierarchie nach oben – dafür braucht es keinen Messenger.
+   * → [{key, label, ids[]}], erster Eintrag = Standard.
+   *   Mitarbeitende → zuständige Schichtleitung (Abteilung + Schicht), Filialleitung
+   *   Schicht-/Teamleitung → Filialleitung, Admin vom Dienst, (Schichtleitung) Teamleitung
+   *   Admin/Filialleitung → Filialleitung
+   */
+  function photoTargetOptions(me, now) {
+    now = now0(now);
+    if (!me) return [];
+    const dept = M.deptOf(me, now) || me.dept, shift = me.sh || M.currentShift(now) || 'Früh';
+    const out = [];
+    const add = (key, label, ids) => { ids = U.uniq(ids).filter((id) => id !== me.id && M.emp(id)); if (ids.length) out.push({ key, label, ids }); };
+    if (me.role === 'emp' || me.role === 'azubi') {
+      let sl = M.shiftLeads(dept, shift);
+      if (!sl.length) sl = M.teamLeads(dept);
+      add('sl', 'Meine Schichtleitung', sl.length ? sl : [].concat(M.adminOnDuty(now)));
+      add('fl', 'Filialleitung', flIds(now));
+    } else if (me.role === 'sl' || me.role === 'tl') {
+      add('fl', 'Filialleitung', flIds(now));
+      add('admin', 'Admin vom Dienst', [].concat(M.adminOnDuty(now)));
+      if (me.role === 'sl') add('tl', 'Teamleitung', M.teamLeads(dept));
+    } else {
+      add('fl', 'Filialleitung', flIds(now));
+    }
+    return out;
+  }
+  /** Zielpersonen für einen Schlüssel (Standard: erste Option) */
+  function photoTargets(to, now, me) {
+    now = now0(now);
+    const m = me || SN.session.me();
+    const opts = photoTargetOptions(m, now);
+    const hit = opts.find((o) => o.key === to) || opts[0];
+    if (hit) return hit.ids;
+    return to === 'admin' ? [].concat(M.adminOnDuty(now)).filter(Boolean) : flIds(now);
+  }
+  /** opts {cat, dept, body, orig, photos[], u, to: 'sl'|'fl'|'admin'|'tl' (Standard: eine Stufe höher), ids[]} */
   function photoReport(by, opts, now) {
     now = now0(now);
     const c = PHOTO_CAT[opts.cat] || PHOTO_CAT.other;
-    const ids = photoTargets(opts.to, now).filter((id) => id !== by);
     if (!opts.photos || !opts.photos.length) return Promise.resolve({ ok: false, reason: 'Bitte mindestens ein Foto aufnehmen.' });
-    return SN.comm.send({ kind: 'photo', cat: c.key, title: c.label, body: opts.body || '', orig: opts.orig, photos: opts.photos.slice(0, 4), dept: opts.dept, u: !!opts.u, to: { type: 'person', ids: ids.length ? ids : [M.adminOnDuty(now)] } }, by, now);
+    const ids = (opts.ids && opts.ids.length ? opts.ids : photoTargets(opts.to, now, M.emp(by))).filter((id) => id !== by);
+    if (!ids.length) return Promise.resolve({ ok: false, reason: 'Kein Empfänger gefunden.' });
+    return SN.comm.send({ kind: 'photo', cat: c.key, title: c.label, body: opts.body || '', orig: opts.orig, photos: opts.photos.slice(0, 4), dept: opts.dept, u: !!opts.u, to: { type: 'person', ids } }, by, now);
   }
   /** Schnellantworten der Filialleitung */
   const PHOTO_REPLIES = ['Passt so', 'Bitte nachbessern', 'Danke, gut gemacht', 'Ruf mich kurz an'];
@@ -330,7 +365,7 @@
   }
 
   SN.ops = {
-    PHOTO_CATS, PHOTO_CAT, PHOTO_REPLIES, photoTargets, photoReport,
+    PHOTO_CATS, PHOTO_CAT, PHOTO_REPLIES, photoTargets, photoTargetOptions, photoReport,
     UNIT, effortCfg, unitMin, planDelivery, unitsFromCounts, createDelivery, unitLabel,
     SCAN_RULE, scanState, scanUnit, scannedCodes, matchName, rosterPreview, applyRoster,
     REST_H, restCheck, PROMO_DEPTS, PROMO_STEPS, createPromoChange, promoProgress,

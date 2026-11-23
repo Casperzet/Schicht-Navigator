@@ -311,6 +311,7 @@
     sos: ['admin', 'fl'],
     handover: ['admin'],
     task: ['sl', 'tl'], // nur für Checklisten-Aufträge mit escalate:true
+    photo: ['sl', 'tl', 'admin', 'fl'], // Fotobericht: ungesehen → eine Stufe höher
   };
 
   /**

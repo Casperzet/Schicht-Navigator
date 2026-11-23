@@ -120,3 +120,16 @@ Ausführliche Tabellen mit Optionen, Begründung und Tests: `docs/entscheidungen
 1. **Kaufland Connect:** Die Recherche fand eine Mitarbeiter-App mit Chat (Start in Tschechien belegt; Deutschland/Langenfeld nicht belegt). Mit Filialleitung, Betriebsrat und Datenschutz klären, wie der Schicht-Navigator dazu steht – vor dem Echtbetrieb.
 2. **Sollwerte:** Kühlung (Temperaturgrenzen), Fälligkeiten der Rundgänge (jetzt Frische 9 und 17 Uhr), Soll-Besetzung je Abteilung und Schicht (jetzt Annahmen: Kasse 4, Wareneingang 2, Obst/Gemüse 2, Backshop 2, sonst 1).
 3. **Alte Titel mit Emojis** in einer bestehenden Datenbank werden nicht migriert (neue sind sauber).
+
+## 12. Foto entlang der Hierarchie (ersetzt den Messenger)
+
+| Thema | Möglichkeiten | Entscheidung | Begründung | Geprüft durch |
+|---|---|---|---|---|
+| Wer darf Fotos nach oben schicken | nur Schichtleitung · alle | **Alle, immer eine Stufe höher**: Mitarbeitende → zuständige Schichtleitung (Abteilung + Schicht), Schichtleitung → Filialleitung (dazu Admin vom Dienst, Teamleitung), Admin → Filialleitung | Jeder Weg, den heute WhatsApp übernimmt, hat einen festen Empfänger mit Status | `flows-photo.js` |
+| Empfänger wählen | frei · feste Stufen | **Standard = eine Stufe höher**, eine Zweitwahl als Chip; keine freie Personenauswahl | Verhindert den Umweg „an irgendwen schicken“ und hält Zuständigkeit klar | `flows-photo.js` |
+| Wenn niemand reagiert | nichts · Eskalation | **Foto rückt nach 20 Min (🔥 10 Min) eine Stufe höher** (vorher fehlte die Eskalation für Fotos im Modell – behoben) | Gleiches Prinzip wie bei allen Vorgängen: niemand wartet still | `flows-photo.js` |
+| Antwort an den Absender | Chat · am Foto | **Schnellantworten am Foto** („Passt so“, „Bitte nachbessern“ …), Absender sieht sie auf dem Start („Antworten auf deine Fotos“) | Ein Tap statt Tippen; Verlauf bleibt am Vorgang | `flows-photo.js` |
+| Foto im Chat | nicht erlauben · erlauben | **Erlaubt** (Kamera-Knopf im Chat) | Rückfrage mit Bild ohne Messenger-Wechsel | `flows-photo.js` |
+| Foto von oben nach unten | nur Text · Referenzfoto | **Referenzfoto an Anweisung und Auftrag** („So soll es aussehen“, bis 2) | Soll-Zustand zeigen statt beschreiben | `flows-photo.js` |
+| Datenschutz | – | Löschfrist 30 Tage gilt für alle Fotos (`MEDIA_DAYS`); keine Personenaufnahmen verlangen | Siehe Abschnitt 5 | `server.test.js` |
+| Technische Absicherung | – | **Keine Neuzeichnung, solange Kamera/Dateiauswahl offen ist**, damit ein gewähltes Foto nicht verloren geht | Auf dem Telefon bleibt die Seite im Hintergrund aktiv | `flows-photo.js` |

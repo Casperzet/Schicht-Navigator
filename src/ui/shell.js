@@ -248,7 +248,9 @@
       renderQueued = false;
       const a = document.activeElement;
       const typing = a && byId('view').contains(a) && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && a.type !== 'checkbox' && a.type !== 'radio'));
-      if (typing) { st.dirty = true; return; }
+      // Kamera/Dateiauswahl offen: nicht neu zeichnen, sonst geht das gewählte Foto verloren
+      const picking = st.picking && Date.now() - st.picking < 120000;
+      if (typing || picking) { st.dirty = true; return; }
       render(true);
     }, 30);
   }
@@ -376,6 +378,14 @@
   async function start(info) {
     st.started = true;
     document.addEventListener('click', onClick);
+    document.addEventListener('click', (ev) => {
+      const l = ev.target.closest && ev.target.closest('label[for]');
+      const inp = l ? document.getElementById(l.htmlFor) : ev.target;
+      if (inp && inp.tagName === 'INPUT' && inp.type === 'file') st.picking = Date.now();
+    }, true);
+    document.addEventListener('change', (ev) => {
+      if (ev.target && ev.target.type === 'file') { st.picking = 0; setTimeout(() => { if (st.dirty) { st.dirty = false; render(true); } }, 1500); }
+    }, true);
     document.addEventListener('change', (ev) => {
       const el = ev.target.closest('[data-change]');
       if (el && changes[el.dataset.change]) Promise.resolve().then(() => changes[el.dataset.change](el, ev)).catch((e) => console.error(e));

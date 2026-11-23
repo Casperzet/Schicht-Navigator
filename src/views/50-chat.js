@@ -22,7 +22,7 @@
       return sep + '<div class="sn-bubble' + (out ? ' sn-bubble--out' : '') + '">'
         + (!out && info.type !== 'dm' ? '<p class="sn-bubble__author">' + esc(M.name(m.by)) + '</p>' : '')
         + (m.text ? '<p class="sn-bubble__text">' + esc(m.text) + '</p>' : '')
-        + (m.photo ? '<img alt="Foto" src="' + esc(m.photo) + '" style="max-width:100%;border-radius:8px">' : '')
+        + (m.photo ? '<img alt="Foto im Chat" loading="lazy" src="' + esc(m.photo) + '" style="max-width:100%;border-radius:12px;margin-top:4px">' : '')
         + (tr[m.id] ? '<p class="sn-translation">' + icon('translate') + ' ' + esc(tr[m.id]) + '</p>' : '')
         + '<div class="sn-bubble__meta">' + U.fmt.time(m.at)
         + (out ? ' <span class="sn-receipt sn-receipt--' + C.receipt(tid, m) + '">' + (C.receipt(tid, m) === 'read' ? 'gelesen' : 'gesendet') + '</span>' : '')
@@ -34,6 +34,7 @@
       + '<div class="sn-chat" id="chat-list">' + (body || P.empty('Noch keine Nachrichten', 'Schreib die erste oder tippe eine Schnellantwort.')) + '</div>'
       + '<div class="sn-chips">' + quick.map((q) => '<button type="button" class="sn-chip sn-chip--outline" data-act="chat-quick" data-x="' + esc(q) + '">' + esc(q) + '</button>').join('') + '</div>'
       + '<div class="sn-composer"><label class="sn-sr-only" for="chat-in">Nachricht</label><input class="sn-input" id="chat-in" autocomplete="off" placeholder="Nachricht" data-enter="chat-send" value="' + esc(draft || '') + '">'
+      + '<label class="sn-btn sn-btn--icon" for="chat-photo" aria-label="Foto senden">' + icon('camera') + '<span>Foto</span></label><input type="file" id="chat-photo" accept="image/*" capture="environment" hidden data-change="chat-photo">'
       + (SN.ai.dictation.available() ? '<button type="button" class="sn-btn sn-btn--icon" data-act="mic" data-target="chat-in">' + icon('mic') + '<span>Sprechen</span></button>' : '')
       + '<button type="button" class="sn-btn sn-btn--primary sn-btn--icon" data-act="chat-send">' + icon('send') + '<span>Senden</span></button></div>';
   }
@@ -75,6 +76,15 @@
     if (r.ok) { const i = document.getElementById('chat-in'); if (i) { i.value = ''; } ui.render(true); const n = document.getElementById('chat-in'); if (n) n.focus(); }
     else ui.result(r);
   }
+  ui.onChange('chat-photo', async (el) => {
+    const f = el.files && el.files[0]; if (!f || !openTid) return;
+    const img = await U.shrinkImage(f, 1280, 0.72);
+    let url = img.dataUrl;
+    try { url = await SN.store.upload(img.blob, img.dataUrl); } catch (e) { /* Foto bleibt im Chat-Eintrag */ }
+    const me = SN.session.me();
+    const r = await C.chatSend(openTid, me.id, { text: String(ui.sheetVal('chat-in') || '').trim(), photo: url, lang: me.lang });
+    if (r.ok) { ui.render(true); } else ui.result(r);
+  });
   ui.on('chat-send', () => { const v = String(ui.sheetVal('chat-in') || '').trim(); if (v) send(v); });
   ui.on('chat-quick', (el) => send(el.dataset.x));
   ui.on('chat-tr', async (el) => {

@@ -29,6 +29,7 @@ node test/server.test.js           # Server: Schlüssel, SSE, Löschfrist
 node test/lead.test.js && node test/flows-lead.js          # Steuerpult der Schichtleitung
 node test/overview.test.js && node test/flows-overview.js  # Übersicht/Personal der Filialleitung
 node test/ops.test.js              # Ruhezeit (ArbZG), Werbewechsel
+node test/flows-photo.js           # Foto nach oben entlang der Hierarchie, Chat-Foto, Referenzfoto
 node test/icons.test.js            # Icon-Sprite vollständig, kein Emoji im UI
 PORT=8090 FILIAL_KEY=langenfeld-test DATA_DIR=/tmp/sn-data node server/server.js &
 SN_SERVER=http://localhost:8090 SN_KEY=langenfeld-test node test/server-flows.js

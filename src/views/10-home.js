@@ -21,6 +21,7 @@
   function tiles(me, now) {
     return '<div class="sn-tiles">'
       + '<button type="button" class="sn-tile" data-go="report">' + icon('camera', 'sn-icon--lg sn-tile__icon') + '<span><span class="sn-tile__label">Problem melden</span><span class="sn-tile__sub">3 Taps, geht sofort an die richtige Person</span></span></button>'
+      + '<button type="button" class="sn-tile" data-go="photo">' + icon('image', 'sn-icon--lg sn-tile__icon') + '<span><span class="sn-tile__label">Foto an Vorgesetzte</span><span class="sn-tile__sub">statt WhatsApp, mit Antwort</span></span></button>'
       + '<button type="button" class="sn-tile" data-act="call-sheet">' + icon('users', 'sn-icon--lg sn-tile__icon') + '<span><span class="sn-tile__label">Hilfe rufen</span><span class="sn-tile__sub">Kasse, Info, Wareneingang</span></span></button>'
       + pauseTile(me, now)
       + '<button type="button" class="sn-tile sn-tile--sos" data-act="sos">' + icon('sos', 'sn-icon--lg sn-tile__icon') + '<span><span class="sn-tile__label">SOS</span><span class="sn-tile__sub">Notfall melden</span></span></button>'
@@ -55,6 +56,8 @@
     h += P.sec('Meine Aufträge', mine.length) + (mine.length ? P.list(mine.slice(0, 3), me, now) + (mine.length > 3 ? '<button type="button" class="sn-btn sn-btn--ghost sn-btn--block" data-go="tasks">Alle Aufträge</button>' : '') : P.empty('Keine Aufträge', 'Freie Aufträge findest du unter „Aufträge“.', true));
     const myRep = C.sentBy(me.id).filter((it) => (it.kind === 'report' || it.kind === 'absence' || it.kind === 'call') && !C.isFinal(it));
     if (myRep.length) h += P.sec('Meine offenen Meldungen', myRep.length) + P.list(myRep, me, now, '', { compact: true });
+    const ans = C.sentBy(me.id, 'photo').filter((it) => (it.thread || []).some((t) => t.by !== me.id) && now - it.createdAt < U.DAY);
+    if (ans.length) h += P.sec('Antworten auf deine Fotos', ans.length) + ans.map((it) => { const r = it.thread.filter((t) => t.by !== me.id).slice(-1)[0]; return '<button type="button" class="sn-card sn-card--tap" style="width:100%;text-align:left;padding:12px" data-act="ph-open" data-id="' + it.id + '"><b>' + esc(it.title) + '</b><p class="sn-small" style="margin:4px 0 0">' + esc(M.first(r.by)) + ': ' + esc(r.text) + '</p></button>'; }).join('');
     const kudos = C.postsFor(me.id).filter((it) => it.kudos && now - it.createdAt < 3 * U.DAY);
     if (kudos.length) h += P.sec('Lob für dich') + kudos.map((k) => '<div class="sn-card sn-kudos">' + icon('heart-fill', 'sn-icon--sm') + ' <b>' + esc(M.first(k.from)) + ':</b> ' + esc(k.body || k.title) + '</div>').join('');
     return h;

@@ -61,13 +61,16 @@
     return { type: 'person', ids, label: to };
   }
 
+  let refShots = []; // Referenzfotos (nach unten: „so soll es aussehen“)
+  const refField = () => '<div class="sn-field"><span class="sn-label">Referenzfoto (optional)</span>' + (refShots.length ? '<div class="sn-photos">' + refShots.map((u, k) => '<figure style="position:relative;margin:0"><img alt="Referenzfoto ' + (k + 1) + '" src="' + esc(u) + '"><button type="button" class="sn-btn sn-btn--icon" style="position:absolute;top:4px;right:4px;min-height:40px;min-width:40px" aria-label="Foto entfernen" data-act="ref-del" data-i="' + k + '">' + icon('x') + '</button></figure>').join('') + '</div>' : '')
+    + (refShots.length < 2 ? '<label class="sn-btn sn-btn--secondary sn-btn--block" for="ref-photo">' + icon('camera') + '<span>Foto anhängen – „So soll es aussehen“</span></label><input type="file" id="ref-photo" accept="image/*" capture="environment" hidden data-change="ref-photo">' : '') + '</div>';
   function form(me, now) {
     if (mode === 'post' || mode === 'briefing') {
       return (mode === 'briefing' ? '<p class="sn-muted">Die 3 wichtigsten Infos zum Schichtbeginn. Alle der Schicht müssen quittieren.</p>' + [1, 2, 3].map((i) => '<div class="sn-field"><label class="sn-label" for="br-' + i + '">' + i + '. Info</label><input class="sn-input" id="br-' + i + '"></div>').join('')
         : targetFields(me, now)
           + '<div class="sn-field"><label class="sn-label" for="po-title">Betreff</label><input class="sn-input" id="po-title" placeholder="z. B. Rückruf Babybrei – Regal räumen"></div>'
           + '<div class="sn-field"><label class="sn-label" for="po-body">Text</label><textarea class="sn-textarea" id="po-body" rows="3"></textarea></div>'
-          + '<label class="sn-switch">Quittierung verlangen<input type="checkbox" role="switch" id="po-ack" checked></label>')
+          + refField() + '<label class="sn-switch">Quittierung verlangen<input type="checkbox" role="switch" id="po-ack" checked></label>')
         + '<label class="sn-check"><input type="checkbox" id="po-u"><span><span class="sn-inline">' + ui.urgent() + '</span> (Frist ' + M.settings().deadlines.postUrgent + ' statt ' + M.settings().deadlines.post + ' Min, dann eskaliert es an die Schichtleitung)</span></label>';
     }
     if (mode === 'task') {
@@ -76,7 +79,7 @@
         + '<div class="sn-field"><label class="sn-label" for="tk-act">Tätigkeit (Dauer nach Richtwert)</label><select class="sn-select" id="tk-act">' + M.ACTS.map((a) => '<option value="' + esc(a.key) + '">' + esc(a.label) + '</option>').join('') + '</select></div>'
         + choice('tk-due', { legend: 'Frist', items: [['60', 'In 1 Stunde'], ['shift', 'Bis Schichtende'], ['tomorrow', 'Morgen']] }, 'shift')
         + '<label class="sn-check"><input type="checkbox" id="tk-u"><span class="sn-inline">' + ui.urgent() + '</span></label>'
-        + '<label class="sn-switch">Foto als Nachweis<input type="checkbox" role="switch" id="tk-proof"></label>'
+        + refField() + '<label class="sn-switch">Foto als Nachweis<input type="checkbox" role="switch" id="tk-proof"></label>'
         + '<label class="sn-switch">Eskalieren, wenn bis Frist nicht erledigt<input type="checkbox" role="switch" id="tk-esc" checked></label>'
         + '<p class="sn-muted sn-small">Wird automatisch verteilt: gleiche Abteilung und passende Tätigkeit zuerst, geringste Auslastung gewinnt, nie über das Limit.</p>';
     }
@@ -96,7 +99,9 @@
       + '<div id="send-form">' + form(me, now) + '</div>',
       '<button type="button" class="sn-btn sn-btn--primary sn-btn--lg sn-btn--block" data-act="send-go">' + icon('send') + '<span>Senden</span></button>');
   }
-  ui.on('send-sheet', () => { mode = 'post'; openSend(); });
+  ui.on('send-sheet', () => { mode = 'post'; refShots = []; openSend(); });
+  ui.onChange('ref-photo', async (el) => { const f = el.files && el.files[0]; if (!f) return; const img = await U.shrinkImage(f, 1280, 0.72); let u = img.dataUrl; try { u = await SN.store.upload(img.blob, img.dataUrl); } catch (e) { /* bleibt im Vorgang */ } refShots.push(u); openSend(); });
+  ui.on('ref-del', (el) => { refShots.splice(+el.dataset.i, 1); openSend(); });
   ui.on('send-mode', (el) => { mode = el.dataset.k; openSend(); });
   ui.onChange('send-to', (el) => document.querySelectorAll('[data-to]').forEach((x) => { x.hidden = x.dataset.to !== el.value; }));
 
@@ -115,7 +120,7 @@
       if (!title) return ui.toast('Bitte einen Betreff eingeben.', 'warn');
       const to = onlyOnDuty(readTarget(now), now);
       if (!M.resolveTo(to, now).filter((id) => id !== me.id).length) return ui.toast('Niemand erreichbar mit dieser Auswahl.', 'warn');
-      r = await C.post(me.id, { to, title, body: ui.sheetVal('po-body') || '', needAck: !!ui.sheetVal('po-ack'), u: !!ui.sheetVal('po-u') });
+      r = await C.post(me.id, { to, title, body: ui.sheetVal('po-body') || '', needAck: !!ui.sheetVal('po-ack'), u: !!ui.sheetVal('po-u'), photos: refShots.slice() });
     } else if (mode === 'briefing') {
       const lines = [1, 2, 3].map((i) => String(ui.sheetVal('br-' + i) || '').trim()).filter(Boolean);
       if (!lines.length) return ui.toast('Bitte mindestens eine Info eintragen.', 'warn');
@@ -126,15 +131,16 @@
       if (!lines.length) return ui.toast('Bitte beschreiben, was zu tun ist.', 'warn');
       const due = dueFrom(P.picked('tk-due'), now, me);
       for (const title of lines) {
-        r = await C.task(me.id, { title, dept: ui.sheetVal('tk-dept'), act: ui.sheetVal('tk-act'), due, u: !!ui.sheetVal('tk-u'), proofRequired: !!ui.sheetVal('tk-proof'), escalate: !!ui.sheetVal('tk-esc') });
+        r = await C.task(me.id, { title, dept: ui.sheetVal('tk-dept'), act: ui.sheetVal('tk-act'), due, u: !!ui.sheetVal('tk-u'), proofRequired: !!ui.sheetVal('tk-proof'), escalate: !!ui.sheetVal('tk-esc'), photos: refShots.slice() });
         if (!r.ok) break;
       }
-      if (r.ok) { const d = await SN.dist.run(me.id); ui.result(r, lines.length + ' gesendet. ' + SN.dist.resultText(d)); ui.closeSheet(); return; }
+      if (r.ok) { refShots = []; const d = await SN.dist.run(me.id); ui.result(r, lines.length + ' gesendet. ' + SN.dist.resultText(d)); ui.closeSheet(); return; }
     } else if (mode === 'kudos') {
       const text = String(ui.sheetVal('ku-text') || '').trim();
       if (!text) return ui.toast('Bitte kurz schreiben, wofür.', 'warn');
       r = await C.kudos(me.id, ui.sheetVal('ku-to'), text);
     }
+    if (r && r.ok) refShots = [];
     if (ui.result(r, mode === 'kudos' ? 'Lob gesendet' : 'Gesendet – du siehst live, wer es gelesen und quittiert hat')) { ui.closeSheet(); ui.go('inbox', {}); ui.sub('inTab', 'sent'); }
   });
 })(window.SN = window.SN || {});
