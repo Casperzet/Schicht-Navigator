@@ -12,7 +12,7 @@
   /* ---------- kleine Bausteine ------------------------------------------- */
   const sec = (title, small) => '<h2 class="sn-section-title">' + esc(title) + (small !== undefined && small !== '' ? ' <small>' + esc(small) + '</small>' : '') + '</h2>';
   const empty = (title, text, ok) => '<div class="sn-empty' + (ok ? ' sn-empty--ok' : '') + '"><span class="sn-empty__icon">' + icon(ok ? 'check' : 'inbox') + '</span><p class="sn-empty__title">' + esc(title) + '</p>' + (text ? '<p class="sn-empty__text">' + esc(text) + '</p>' : '') + '</div>';
-  const chip = (text, mod) => '<span class="sn-chip' + (mod ? ' sn-chip--' + mod : '') + '">' + esc(text) + '</span>';
+  const chip = (text, mod, ic) => '<span class="sn-chip' + (mod ? ' sn-chip--' + mod : '') + '">' + (ic ? icon(ic) : '') + esc(text) + '</span>';
   const btn = (label, act, data, mod, ic) => '<button type="button" class="sn-btn sn-btn--' + (mod || 'secondary') + '" data-act="' + act + '"'
     + Object.entries(data || {}).map(([k, v]) => ' data-' + k + '="' + esc(v) + '"').join('') + '>' + (ic ? icon(ic) : '') + '<span>' + esc(label) + '</span></button>';
   const initials = (n) => String(n || '?').split(' ').map((x) => x[0]).join('').slice(0, 2).toUpperCase();
@@ -58,7 +58,7 @@
     const canTr = SN.ai.available().text;
     return '<p class="sn-card__body">' + esc(it.body) + '</p>'
       + (it.orig && it.orig !== it.body ? '<p class="sn-muted sn-small">Original: ' + esc(it.orig) + '</p>' : '')
-      + (t ? '<p class="sn-translation">🌐 ' + esc(t) + '</p>' : canTr && lang !== 'de' ? '<button type="button" class="sn-link" data-act="it-translate" data-id="' + it.id + '">🌐 In ' + esc(SN.ai.LANGS[lang] || lang) + ' übersetzen</button>' : '');
+      + (t ? '<p class="sn-translation">' + icon('translate') + ' ' + esc(t) + '</p>' : canTr && lang !== 'de' ? '<button type="button" class="sn-link" data-act="it-translate" data-id="' + it.id + '">' + icon('translate') + 'In ' + esc(SN.ai.LANGS[lang] || lang) + ' übersetzen</button>' : '');
   }
 
   /* ---------- Aktionen je Art und Rolle --------------------------------- */
@@ -92,7 +92,7 @@
           if (it.state !== 'taken') a.push(btn('Übernehmen', 'it-take', { id: it.id }, 'primary', 'check'));
           else a.push(btn('Erledigt', 'it-done', { id: it.id }, 'primary', 'check'));
           a.push(btn('Weitergeben', 'it-forward', { id: it.id }, 'secondary', 'forward'));
-          if (M.isLead(me) && it.kind === 'report' && !it.taskId) a.push(btn('➕ Auftrag', 'it-totask', { id: it.id }, 'ghost'));
+          if (M.isLead(me) && it.kind === 'report' && !it.taskId) a.push(btn('Auftrag anlegen', 'it-totask', { id: it.id }, 'ghost', 'plus'));
         }
         break;
       case 'call':
@@ -129,8 +129,10 @@
     if (lvl > 0 && !fin) cls.push('sn-card--escalated');
     if (fin) cls.push('is-done');
     const cat = it.kind === 'report' ? M.CAT[it.cat] : null;
-    const kindLabel = cat ? cat.icon + ' ' + cat.label : M.KINDS[it.kind] || it.kind;
-    const stateLabel = it.kind === 'task' && it.state === 'taken' ? '▶ In Arbeit' : M.STATES[it.state] || it.state;
+    const kindLabel = cat ? cat.label : M.KINDS[it.kind] || it.kind;
+    const working = it.kind === 'task' && it.state === 'taken';
+    const stateLabel = working ? 'In Arbeit' : M.STATES[it.state] || it.state;
+    const stateIcon = fin ? 'check' : working ? 'play' : it.state === 'seen' ? 'eye' : it.state === 'sent' ? 'send' : lvlIcon(it);
     const due = it.kind === 'task' ? it.due : it.ackDue;
     const meta = [];
     if (due && !fin) meta.push('<div class="sn-meta__item">' + icon('clock') + '<dt class="sn-sr-only">Frist</dt><dd>' + deadline(due) + '</dd></div>');
@@ -139,10 +141,10 @@
     if (it.kind === 'task' && it.min) meta.push('<div class="sn-meta__item"><dt>Dauer</dt><dd>ca. ' + esc(U.fmt.dur(it.min)) + (it.act ? ' · ' + esc(it.act) : '') + '</dd></div>');
     const wait = insider || it.kind === 'task' || it.kind === 'call' ? C.waitingOn(it, now) : '';
     return '<article class="' + cls.join(' ') + '" data-item="' + it.id + '">'
-      + (it.u && !fin ? '<div class="sn-card__flag">🔥 Dringend' + (it.needAck && !fin ? ' · Bitte quittieren' : '') + '</div>' : lvl > 0 && !fin ? '<div class="sn-card__flag">Eskaliert · Stufe ' + lvl + '</div>' : '')
+      + (it.u && !fin ? '<div class="sn-card__flag">' + ui.urgent() + (it.needAck && !fin ? ' · Bitte quittieren' : '') + '</div>' : lvl > 0 && !fin ? '<div class="sn-card__flag">' + icon('escalate') + 'Eskaliert · Stufe ' + lvl + '</div>' : '')
       + '<div class="sn-card__head"><h3 class="sn-card__title"><button type="button" class="sn-card__open" data-act="it-open" data-id="' + it.id + '">' + esc(it.title || kindLabel) + '</button></h3>'
-      + chip(stateLabel, fin ? 'ok' : it.state === 'taken' ? 'info' : lvl > 0 ? 'escalated' : '') + '</div>'
-      + '<p class="sn-card__kind">' + esc(kindLabel) + (it.to && it.from === me.id ? ' · an ' + esc(M.labelFor(C.recipients(it))) : '') + '</p>'
+      + chip(stateLabel, fin ? 'ok' : it.state === 'taken' ? 'info' : lvl > 0 ? 'escalated' : '', stateIcon) + '</div>'
+      + '<p class="sn-card__kind">' + (cat ? icon(cat.icon, 'sn-icon--sm') + ' ' : '') + esc(kindLabel) + (it.to && it.from === me.id ? ' · an ' + esc(M.labelFor(C.recipients(it))) : '') + '</p>'
       + (opts.compact ? '' : body(it, me))
       + (it.photos && it.photos.length && !opts.compact ? '<div class="sn-photos">' + it.photos.slice(0, 4).map((p) => '<img alt="Foto zur Meldung" src="' + esc(p) + '">').join('') + '</div>' : '')
       + (it.checklist && it.checklist.length ? checklist(it, me) : '')
@@ -153,6 +155,7 @@
       + actions(it, me)
       + '</article>';
   }
+  const lvlIcon = (it) => (it.esc && it.esc.level > 0 ? 'escalate' : 'clock');
   function checklist(it, me) {
     const can = it.owner === me.id || M.isLead(me);
     return '<ul class="sn-checklist">' + it.checklist.map((c, i) => '<li><label class="sn-check"><input type="checkbox" data-change="check-item" data-id="' + it.id + '" data-i="' + i + '"' + (c.done ? ' checked' : '') + (can ? '' : ' disabled') + '>' + esc(c.text) + (c.at ? ' <small>' + esc(c.at) + '</small>' : '') + '</label></li>').join('') + '</ul>';

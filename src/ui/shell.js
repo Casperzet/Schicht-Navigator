@@ -19,6 +19,12 @@
   const st = { tab: null, params: {}, sub: {}, dirty: false, lastChatSeen: {}, notified: {}, started: false };
 
   function icon(name, cls) { return '<svg class="sn-icon' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#i-' + name + '"/></svg>'; }
+  /** Dringend = Flammen-Icon + Wort (nie nur Symbol) */
+  function urgent(text) { return icon('flame-fill') + '<span>' + esc(text || 'Dringend') + '</span>'; }
+  /** Abteilung mit eigenem Icon */
+  function dept(d) { return icon(M.DEPT_ICONS[d] || 'pin') + '<span>' + esc(d) + '</span>'; }
+  /** Gefüllte Variante für „aktiv“, falls im Sprite vorhanden */
+  function iconActive(name) { return document.getElementById('i-' + name + '-fill') ? icon(name + '-fill') : icon(name); }
 
   /* ---------- Registrierung ------------------------------------------------ */
   function registerView(tab, def) { views[tab] = Object.assign({ order: 50, groups: [] }, def, { tab }); }
@@ -67,7 +73,7 @@
       const b = v.badge ? v.badge(me) : 0;
       const n = typeof b === 'object' ? b.n : b, urg = typeof b === 'object' && b.urgent;
       return '<button type="button" class="sn-nav__item" data-go="' + v.tab + '"' + (st.tab === v.tab ? ' aria-current="page"' : '') + '>'
-        + '<span class="sn-nav__icon">' + icon(v.icon || 'home') + (n ? '<span class="sn-badge' + (urg ? ' sn-badge--urgent' : '') + '">' + (n > 99 ? '99+' : n) + '</span>' : '') + '</span>'
+        + '<span class="sn-nav__icon">' + (st.tab === v.tab ? iconActive(v.icon || 'home') : icon(v.icon || 'home')) + (n ? '<span class="sn-badge' + (urg ? ' sn-badge--urgent' : '') + '">' + (n > 99 ? '99+' : n) + '</span>' : '') + '</span>'
         + esc(v.label) + '</button>';
     }).join('');
   }
@@ -99,8 +105,8 @@
         + '</div></div>');
     }
     for (const it of C.openCalls(me.id)) {
-      out.push('<div class="sn-alert sn-alert--warn" role="alert"><span class="sn-alert__icon">' + icon('bell') + '</span>'
-        + '<p class="sn-alert__title">' + esc((M.CALL[it.type] || {}).icon || '📣') + ' ' + esc(it.title) + '</p>'
+      out.push('<div class="sn-alert sn-alert--warn" role="alert"><span class="sn-alert__icon">' + icon((M.CALL[it.type] || {}).icon || 'bell') + '</span>'
+        + '<p class="sn-alert__title">' + esc(it.title) + '</p>'
         + '<p class="sn-alert__text">' + esc(M.name(it.from)) + ' · ' + esc(U.fmt.ago(it.createdAt)) + (it.body ? ' · ' + esc(it.body) : '') + '</p>'
         + '<div class="sn-alert__actions"><button class="sn-btn sn-btn--primary" data-act="call-yes" data-id="' + it.id + '">' + icon('run') + 'Ich komme</button>'
         + '<button class="sn-btn sn-btn--secondary" data-act="call-no" data-id="' + it.id + '">Kann nicht</button></div></div>');
@@ -120,7 +126,7 @@
       const t = C.threadsFor(me.id).find((x) => x.unread && (C.messages(x.id).slice(-1)[0] || {}).by !== me.id);
       const lm = t ? C.messages(t.id).slice(-1)[0] : null;
       if (t && lm) {
-        t.preview = M.first(lm.by) + ': ' + (lm.text || '📷 Foto');
+        t.preview = M.first(lm.by) + ': ' + (lm.text || 'Foto');
         out.push('<button type="button" class="sn-alert sn-alert--info sn-alert--tap" data-act="chat-open" data-tid="' + esc(t.id) + '"><span class="sn-alert__icon">' + icon('chat') + '</span>'
           + '<p class="sn-alert__title">Neue Nachricht · ' + esc(t.title) + '</p><p class="sn-alert__text">' + esc(t.preview || 'Antippen zum Lesen') + '</p></button>');
       }
@@ -192,12 +198,12 @@
   }
 
   /* ---------- Toast, Sheet --------------------------------------------------- */
-  function toast(text, kind) {
+  function toast(text, kind, ic) {
     const r = byId('toast');
     const el = document.createElement('div');
     el.className = 'sn-toast sn-toast--' + (kind || 'ok');
     el.setAttribute('role', 'status');
-    el.innerHTML = '<span class="sn-toast__icon">' + icon(kind === 'warn' ? 'x' : 'check') + '</span><span class="sn-toast__text">' + esc(text) + '</span>';
+    el.innerHTML = '<span class="sn-toast__icon">' + icon(ic || (kind === 'warn' ? 'alert' : 'check')) + '</span><span class="sn-toast__text">' + esc(text) + '</span>';
     r.appendChild(el);
     U.vibrate(12);
     setTimeout(() => { el.classList.add('is-leaving'); setTimeout(() => el.remove(), 300); }, kind === 'warn' ? 4500 : 2800);
@@ -300,8 +306,8 @@
     try {
       const ps = SN.dist.pauseStatus(me, now);
       const key = 'p-' + me.id + '-' + U.fmt.dayKey(now);
-      if (ps.state === 'due' && !st.notified[key]) { st.notified[key] = 1; toast('☕ Seit 5,5 Std im Dienst: Bitte jetzt Pause nehmen.', 'warn'); }
-      if (ps.state === 'over' && !st.notified[key + 'o']) { st.notified[key + 'o'] = 1; toast('☕ Deine Pause ist abgelaufen.', 'warn'); }
+      if (ps.state === 'due' && !st.notified[key]) { st.notified[key] = 1; toast('Seit 5,5 Std im Dienst: Bitte jetzt Pause nehmen.', 'warn', 'coffee'); }
+      if (ps.state === 'over' && !st.notified[key + 'o']) { st.notified[key + 'o'] = 1; toast('Deine Pause ist abgelaufen.', 'warn', 'coffee'); }
     } catch (e) { /* ohne Plan egal */ }
     // Vorlagen des Tages legt der Admin vom Dienst an
     if (M.isAdmin(me) && M.adminOnDuty(now) === me.id) {
@@ -345,7 +351,7 @@
   }
 
   SN.ui = {
-    registerView, on, onChange, go, render, requestRender, sub, toast, result, sheet, closeSheet, sheetVal, icon,
+    registerView, on, onChange, go, render, requestRender, sub, toast, result, sheet, closeSheet, sheetVal, icon, urgent, dept, iconActive,
     get tab() { return st.tab; }, get params() { return st.params; }, views, start, tick,
   };
 })(window.SN = window.SN || {});
