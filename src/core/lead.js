@@ -247,6 +247,7 @@
   /** Die wichtigsten Handgriffe: [{key, score, level, icon, title, sub, act, label, data}] */
   function next(me, now, max, amp) {
     now = now0(now); max = max || 3;
+    me = M.emp(me.id) || me; // frischer Stand (Pause, Plan)
     amp = amp || ampel(now, { me });
     const out = [];
     const add = (o) => out.push(Object.assign({ level: 'warn', data: {} }, o));
@@ -348,7 +349,7 @@
     now = now0(now);
     const w = M.shiftWindow(M.emp(by), now);
     const from = w ? w.s : U.startOfDay(now);
-    const it = U.sortBy(allItems().filter((x) => x.lage && x.from === by && x.createdAt >= from), (x) => -x.createdAt)[0];
+    const it = allItems().filter((x) => x.lage && x.from === by && x.createdAt >= from).reduce((b, x) => (!b || x.createdAt >= b.createdAt ? x : b), null);
     if (!it) return null;
     const seen = Object.keys(it.seen || {}).filter((id) => id !== by);
     const state = it.state === 'taken' ? 'übernommen von ' + M.first(it.owner) : seen.length ? 'gesehen von ' + names(seen, 2) : 'gesendet, noch nicht gesehen';
