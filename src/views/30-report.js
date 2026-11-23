@@ -28,7 +28,7 @@
         + (SN.ai.dictation.available() ? '<button type="button" class="sn-btn sn-btn--secondary sn-btn--icon" data-act="mic" data-target="rep-text">' + icon('mic') + '<span>Sprechen</span></button>' : '') + '</div>'
         + '<div class="sn-photos">' + photos.map((p, i) => '<img alt="Foto ' + (i + 1) + '" src="' + esc(p) + '">').join('') + '</div>'
         + '<div class="sn-field"><label class="sn-label" for="rep-text">Kurz beschreiben (optional, jede Sprache)</label><textarea class="sn-textarea" id="rep-text" rows="2" placeholder="z. B. Gang 7, oberes Regal"></textarea><p class="sn-field__help">Wird automatisch ins Deutsche übersetzt, das Original bleibt erhalten.</p></div>'
-        + '<label class="sn-check"><input type="checkbox" id="rep-u"' + (['defect', 'safety', 'absence', 'customer'].includes(c.key) ? ' checked' : '') + '>🔥 Dringend</label>'
+        + '<label class="sn-check"><input type="checkbox" id="rep-u"' + (['defect', 'safety', 'absence'].includes(c.key) ? ' checked' : '') + '>🔥 Dringend</label>'
         + '<button type="button" class="sn-btn sn-btn--primary sn-btn--lg sn-btn--block" data-act="rep-send" id="rep-send">' + icon('send') + '<span>Jetzt melden</span></button></section>';
     }
     const mine = C.sentBy(me.id).filter((it) => it.kind === 'report' || it.kind === 'absence');

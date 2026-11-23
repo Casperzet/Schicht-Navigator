@@ -174,7 +174,7 @@ test('Routing je Kategorie (M4) über comm.report', async () => {
   const anna = id('Anna Müller');
   const exp = {
     gap: 'Kemal Aydın', price: 'Dirk Hoffmann', clean: 'Ivana Horvat', defect: 'Mustafa', bottle: 'Natalia Wójcik',
-    customer: 'Kemal Aydın', absence: 'Kemal Aydın', delivery: 'Natalia Wójcik', safety: 'Kemal Aydın', other: 'Kemal Aydın',
+    absence: 'Kemal Aydın', delivery: 'Natalia Wójcik', safety: 'Kemal Aydın', other: 'Kemal Aydın',
   };
   for (const c of SN.model.REPORT_CATS) {
     const r = await SN.comm.report(anna, { cat: c.key, body: 'Test ' + c.label });
@@ -185,7 +185,7 @@ test('Routing je Kategorie (M4) über comm.report', async () => {
   }
   // Fristen je Kategorie
   const d = (cat, u) => SN.model.deadlineMin({ kind: 'report', cat, u });
-  assert.deepStrictEqual([d('gap'), d('price'), d('clean'), d('defect'), d('safety'), d('absence'), d('customer'), d('other'), d('other', true)], [15, 15, 15, 5, 5, 5, 2, 20, 3]);
+  assert.deepStrictEqual([d('gap'), d('price'), d('clean'), d('defect'), d('safety'), d('absence'), d('other'), d('other', true)], [15, 15, 15, 5, 5, 5, 20, 3]);
   // Original bleibt, Übersetzung im Text
   const tr = (await SN.comm.report(anna, { cat: 'price', body: 'Preis falsch', orig: 'Fiyat yanlış', lang: 'tr' })).item;
   assert.strictEqual(tr.orig, 'Fiyat yanlış');

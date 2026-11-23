@@ -97,7 +97,7 @@
     urgent: 3, absence: 5, defect: 5, call: 2, minor: 15, other: 20, post: 30, postUrgent: 10, sos: 2, handover: 15,
   };
   const DEADLINE_LABELS = {
-    urgent: '🔥 Meldung', absence: 'Personalausfall', defect: 'Defekt / Sicherheit', call: 'Kasse-/Info-Ruf, Kunde',
+    urgent: '🔥 Meldung', absence: 'Personalausfall', defect: 'Defekt / Sicherheit', call: 'Kasse-/Info-Ruf',
     minor: 'Lücke / Preis / Reinigung', other: 'Sonstiges', post: 'Anweisung mit Quittung', postUrgent: '🔥 Anweisung mit Quittung',
     sos: 'SOS ohne Antwort', handover: 'Schichtübergabe',
   };
@@ -109,7 +109,6 @@
     { key: 'clean', label: 'Reinigung nötig', icon: '🧹', route: 'clean', dl: 'minor' },
     { key: 'defect', label: 'Defekt (Kühlung, Kasse, Technik)', icon: '🔧', route: 'admin', dl: 'defect' },
     { key: 'bottle', label: 'Leergutautomat', icon: '♻️', route: 'sl', dl: 'minor', dept: 'Leergut' },
-    { key: 'customer', label: 'Kunde braucht Hilfe', icon: '🙋', route: 'sl', dl: 'call' },
     { key: 'absence', label: 'Personalausfall', icon: '🤒', route: 'sl', dl: 'absence' },
     { key: 'delivery', label: 'Lieferung', icon: '🚚', route: 'sl', dl: 'other', dept: 'Wareneinnahme' },
     { key: 'safety', label: 'Sicherheit', icon: '⚠️', route: 'sl', dl: 'defect' },
