@@ -138,6 +138,8 @@
   }
 
   /* ---------- Banner (oberste Priorität: SOS, Eskalation an mich, Rufe) ---- */
+  // Hook „Ruhiger Modus“: SN.ui.quiet = () => boolean (gesetzt vom Steuerpult); dann nur SOS, Eskalation an mich, Rufe
+  const isQuiet = () => { try { return !!(SN.ui && SN.ui.quiet && SN.ui.quiet()); } catch (e) { return false; } };
   function banners(me, now) {
     const out = [];
     const C = SN.comm;
@@ -173,7 +175,7 @@
         + '<button class="sn-btn sn-btn--on-accent" data-act="it-open" data-id="' + it.id + '">Ansehen</button></div></div>');
     }
     // neue Chatnachricht (nicht im Chat-Tab)
-    if (st.tab !== 'chat') {
+    if (st.tab !== 'chat' && !isQuiet()) {
       const t = C.threadsFor(me.id).find((x) => x.unread && (C.messages(x.id).slice(-1)[0] || {}).by !== me.id);
       const lm = t ? C.messages(t.id).slice(-1)[0] : null;
       if (t && lm) {
@@ -360,8 +362,8 @@
     try {
       const ps = SN.dist.pauseStatus(me, now);
       const key = 'p-' + me.id + '-' + U.fmt.dayKey(now);
-      if (ps.state === 'due' && !st.notified[key]) { st.notified[key] = 1; toast('Seit 5,5 Std im Dienst: Bitte jetzt Pause nehmen.', 'warn', 'coffee'); }
-      if (ps.state === 'over' && !st.notified[key + 'o']) { st.notified[key + 'o'] = 1; toast('Deine Pause ist abgelaufen.', 'warn', 'coffee'); }
+      if (ps.state === 'due' && !st.notified[key] && !isQuiet()) { st.notified[key] = 1; toast('Seit 5,5 Std im Dienst: Bitte jetzt Pause nehmen.', 'warn', 'coffee'); }
+      if (ps.state === 'over' && !st.notified[key + 'o'] && !isQuiet()) { st.notified[key + 'o'] = 1; toast('Deine Pause ist abgelaufen.', 'warn', 'coffee'); }
     } catch (e) { /* ohne Plan egal */ }
     // Vorlagen des Tages legt der Admin vom Dienst an
     if (M.isAdmin(me) && M.adminOnDuty(now) === me.id) {
