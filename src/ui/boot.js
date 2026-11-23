@@ -93,7 +93,7 @@
     if (saved && saved.url) return saved;
     const same = await sameOriginServer();
     if (same) return serverForm({ url: same.url }, '');
-    if (isApp()) return serverForm({}, '');
+    if (isApp()) return serverForm({ url: window.SN_DEFAULT_SERVER || '' }, '');
     return null;
   }
   SN.serverReset = () => { U.ls.set('server', null); location.reload(); };

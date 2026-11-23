@@ -1208,7 +1208,9 @@ html, body { height: 100%; overflow: hidden; margin: 0; }
 .sn-tl-shift--late { background: #d6d6d6; }
 .sn-tl-shift i { display: block; height: 100%; background: linear-gradient(90deg, #111, #e10915); }
 .sn-tl-tasks { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px; }
-.sn-tl-tasks .sn-chip { font-size: 12px; min-height: 0; padding: 2px 8px; }</style>
+.sn-tl-tasks .sn-chip { font-size: 12px; min-height: 0; padding: 2px 8px; }
+.sn-photo-card__gone { margin: 0; padding: 14px; background: var(--sn-surface-2, #f1f1f1); color: var(--sn-text-muted, #555); font-weight: 600; text-align: center; }
+.sn-photo-card__media:empty { display: none; }</style>
 </head>
 <body>
 <!-- Icon-Sprite: build.js setzt hier src/ui/icons.svg ein (falls vorhanden) -->
@@ -1268,7 +1270,7 @@ html, body { height: 100%; overflow: hidden; margin: 0; }
   </div>
 </div>
 <noscript>Bitte JavaScript aktivieren, um den Schicht-Navigator zu nutzen.</noscript>
-<script>
+<script>window.SN_DEFAULT_SERVER="https://schicht-navigator.onrender.com";</script><script>
 window.SN = window.SN || {};
 /* ===== src/core/util.js ===== */
 try {
@@ -5236,6 +5238,7 @@ try {
     const fresh = C.isRecipient(it, me.id) && !(it.seen || {})[me.id];
     return '<article class="sn-card sn-photo-card' + (it.u ? ' sn-card--urgent' : '') + (fresh ? ' is-new' : '') + '" data-item="' + it.id + '">'
       + (it.u ? '<div class="sn-card__flag">🔥 Dringend</div>' : '')
+      + (it.photosRemoved && !(it.photos || []).length ? '<p class="sn-photo-card__gone">🗑 ' + U.fmt.count(it.photosRemoved, 'Foto', 'Fotos') + ' nach Löschfrist entfernt (Datenschutz)</p>' : '')
       + '<div class="sn-photo-card__media" data-act="ph-open" data-id="' + it.id + '">' + (it.photos || []).slice(0, 4).map((p, i) => '<img alt="Fotobericht ' + (i + 1) + '" loading="lazy" src="' + esc(p) + '">').join('') + (fresh ? '<span class="sn-photo-card__new">Neu</span>' : '') + '</div>'
       + '<div class="sn-photo-card__body"><div class="sn-card__head"><h3 class="sn-card__title">' + esc(it.title) + '</h3>'
       + '<span class="sn-receipt sn-receipt--' + (replies.length ? 'ack' : seenBy.length ? 'read' : 'sent') + '">' + (replies.length ? 'beantwortet' : seenBy.length ? 'gesehen' : 'gesendet') + '</span></div>'
@@ -6168,7 +6171,7 @@ try {
     if (saved && saved.url) return saved;
     const same = await sameOriginServer();
     if (same) return serverForm({ url: same.url }, '');
-    if (isApp()) return serverForm({}, '');
+    if (isApp()) return serverForm({ url: window.SN_DEFAULT_SERVER || '' }, '');
     return null;
   }
   SN.serverReset = () => { U.ls.set('server', null); location.reload(); };
