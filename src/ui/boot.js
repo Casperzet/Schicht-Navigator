@@ -48,6 +48,56 @@
     });
   }
 
+  /* ---------- Server-Verbindung (APK, eigene Filial-Server) ------------- */
+  const isApp = () => !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  async function sameOriginServer() {
+    if (!/^https?:$/.test(location.protocol) || isApp()) return null;
+    try { const r = await fetch('/api/health', { cache: 'no-store' }); if (!r.ok) return null; const j = await r.json(); return j && j.ok ? { url: location.origin, keyRequired: j.keyRequired } : null; } catch (e) { return null; }
+  }
+  async function testServer(cfg) {
+    const base = cfg.url.replace(/\/+$/, '');
+    const h = await fetch(base + '/api/health', { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
+    if (!h || !h.ok) return 'Server nicht erreichbar. Adresse prüfen (mit https://).';
+    const r = await fetch(base + '/api/snapshot', { headers: cfg.key ? { Authorization: 'Bearer ' + cfg.key } : {} }).catch(() => null);
+    if (!r) return 'Server nicht erreichbar.';
+    if (r.status === 401) return 'Filial-Schlüssel falsch.';
+    return r.ok ? '' : 'Server meldet Fehler ' + r.status + '.';
+  }
+  function serverForm(pre, msg) {
+    return new Promise((resolve) => {
+      const v = byId('view');
+      v.innerHTML = '<section class="sn-login"><h2 class="sn-section-title">Mit Filial-Server verbinden</h2>'
+        + '<p class="sn-muted">Einmalig pro Gerät. Adresse und Filial-Schlüssel bekommst du von der Filialleitung.</p>'
+        + (msg ? '<div class="sn-alert sn-alert--warn sn-alert--card" role="alert"><p class="sn-alert__title">' + U.esc(msg) + '</p></div>' : '')
+        + '<div class="sn-field"><label class="sn-label" for="sv-url">Server-Adresse</label><input class="sn-input" id="sv-url" inputmode="url" autocomplete="url" placeholder="https://schicht.example.de" value="' + U.esc(pre.url || '') + '"></div>'
+        + '<div class="sn-field"><label class="sn-label" for="sv-key">Filial-Schlüssel</label><input class="sn-input" id="sv-key" type="password" autocomplete="off" value="' + U.esc(pre.key || '') + '"></div>'
+        + '<button type="button" class="sn-btn sn-btn--primary sn-btn--lg sn-btn--block" id="sv-go">Verbinden</button>'
+        + '<button type="button" class="sn-btn sn-btn--ghost sn-btn--block" id="sv-demo">Erst mal Demo ansehen</button></section>';
+      byId('sv-demo').onclick = () => resolve(null);
+      byId('sv-go').onclick = async () => {
+        const cfg = { url: byId('sv-url').value.trim(), key: byId('sv-key').value.trim() };
+        if (!/^https?:\/\//.test(cfg.url)) cfg.url = 'https://' + cfg.url;
+        byId('sv-go').textContent = 'Verbinde …';
+        const err = await testServer(cfg);
+        if (err) { resolve(serverForm(cfg, err)); return; }
+        U.ls.set('server', cfg);
+        resolve(cfg);
+      };
+    });
+  }
+  /** Ermittelt {mode, server?}: URL-Parameter → gespeicherte Verbindung → gleicher Server → App → Claude-db → Demo */
+  async function pickServer() {
+    const qs = param('server');
+    if (qs) { const cfg = { url: qs, key: param('key') || '' }; U.ls.set('server', cfg); return cfg; }
+    const saved = U.ls.get('server', null);
+    if (saved && saved.url) return saved;
+    const same = await sameOriginServer();
+    if (same) return serverForm({ url: same.url }, '');
+    if (isApp()) return serverForm({}, '');
+    return null;
+  }
+  SN.serverReset = () => { U.ls.set('server', null); location.reload(); };
+
   /** Platzhalter, solange es noch keine Oberfläche (SN.ui) gibt */
   function placeholder(r) {
     const staff = SN.store.list('staff');
@@ -64,7 +114,10 @@
     const aiReady = SN.ai.init().catch(() => null);
     const forced = param('mode');
     let mode = 'demo';
-    if (forced !== 'demo') {
+    let server = null;
+    if (forced !== 'demo' && forced !== 'db') server = await pickServer();
+    if (server) mode = 'server';
+    else if (forced !== 'demo') {
       const caps = await SN.store.detect();
       if (caps.db) mode = forced === 'db' ? 'db' : await chooseMode();
     }
@@ -74,7 +127,12 @@
     }
     SN.store.onStatus(showStatus);
     showStatus('loading');
-    const r = await SN.store.init(mode);
+    let r = await SN.store.init(mode, server ? { server } : undefined);
+    if (!r.ok && mode === 'server') {
+      // Verbindung fehlgeschlagen (z. B. Schlüssel geändert) → neu eingeben
+      const cfg = await serverForm(server, r.code === 'not_granted' ? 'Filial-Schlüssel ungültig.' : 'Server nicht erreichbar.');
+      r = await SN.store.init(cfg ? 'server' : 'demo', cfg ? { server: cfg } : undefined);
+    }
     showStatus(SN.store.status);
     await aiReady;
     document.documentElement.dataset.snMode = r.mode;

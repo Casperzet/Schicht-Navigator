@@ -166,14 +166,18 @@
   }
 
   function render({ me, now, sub }) {
-    const tabs = [['goods', '🚚 Eingang'], ['stock', '📦 Restware'], ['tpl', '🔁 Vorlagen'], ['team', '👥 Team'], ['set', '⚙️ Einstellungen'], ['mood', '🙂 Stimmung'], ['log', '🧾 Protokoll']];
+    const tabs = [['goods', '🚚 Lieferung'], ['stock', '📦 Restware'], ['tpl', '🔁 Vorlagen'], ['team', '👥 Team'], ['set', '⚙️ Einstellungen'], ['mood', '🙂 Stimmung'], ['log', '🧾 Protokoll']];
     const t = sub.moreTab || 'goods';
     const head = '<div class="sn-chips" role="tablist">' + tabs.map(([k, l]) => '<button type="button" role="tab" class="sn-chip' + (k === t ? ' sn-chip--solid' : ' sn-chip--outline') + '" aria-selected="' + (k === t) + '" data-act="more-tab" data-k="' + k + '">' + l + '</button>').join('') + '</div>';
-    const body = t === 'goods' ? goods(me, now) : t === 'stock' ? stock() : t === 'tpl' ? templates() : t === 'team' ? team(sub) : t === 'set' ? settings(me, now) : t === 'mood' ? mood(now) : logView(now);
-    return head + body + '<button type="button" class="sn-btn sn-btn--ghost sn-btn--block" data-go="me">' + icon('user') + '<span>Ich: Profil, Plan, Abmelden</span></button>';
+    const body = t === 'goods' ? SN.ui.views.ware.render({ me, now, sub, params: {} }) : t === 'stock' ? stock() : t === 'tpl' ? templates() : t === 'team' ? team(sub) : t === 'set' ? settings(me, now) : t === 'mood' ? mood(now) : logView(now);
+    const quick = '<div class="sn-quicklinks">' + P.btn('Wochenplan', 'go-week', {}, 'secondary', 'tasks') + (M.canAiAssist(me) ? P.btn('KI-Diktat', 'go-ai', {}, 'secondary', 'mic') : '') + P.btn('Ich / Abmelden', 'go-me', {}, 'ghost', 'user') + '</div>';
+    return quick + head + body;
   }
   ui.registerView('more', { label: 'Mehr', icon: 'menu', groups: ['admin'], order: 50, render });
   ui.on('more-tab', (el) => ui.sub('moreTab', el.dataset.k));
+  ui.on('go-week', () => ui.go('week', {}));
+  ui.on('go-ai', () => ui.go('ai', {}));
+  ui.on('go-me', () => ui.go('me', {}));
 
   /* ---------- KI-Sprachassistent (K1) ---------------------------------------------- */
   let found = [];
@@ -187,7 +191,7 @@
         + '<div class="sn-field"><label class="sn-label" for="ai-who-' + i + '">Für ' + (f.who && !f.wid ? '<span class="sn-chip sn-chip--urgent">„' + esc(f.who) + '“ nicht gefunden</span>' : '') + '</label><select class="sn-select" id="ai-who-' + i + '"><option value="">Automatisch verteilen</option>' + U.sortBy(SN.dist.candidates(SN.clock.now()), (e) => e.name).map((e) => '<option value="' + e.id + '"' + (e.id === f.wid ? ' selected' : '') + '>' + esc(e.name) + '</option>').join('') + '</select></div></div>').join('')
         + P.btn('Alle senden und verteilen', 'ai-send', {}, 'primary', 'send') : '');
   }
-  ui.registerView('ai', { label: 'KI', icon: 'mic', groups: ['admin'], order: 60, render: aiRender, strict: true, show: (me) => M.canAiAssist(me) });
+  ui.registerView('ai', { label: 'KI', icon: 'mic', groups: ['admin'], order: 60, render: aiRender, allow: (me) => M.canAiAssist(me), show: () => false });
   ui.on('ai-go', async (el) => {
     const tx = String(ui.sheetVal('ai-text') || '').trim(); if (!tx) return ui.toast('Bitte zuerst sprechen oder tippen.', 'warn');
     el.disabled = true;

@@ -39,6 +39,7 @@ const CORE = [
   'src/core/comm.js',   // SN.comm
   'src/core/dist.js',   // SN.dist
   'src/core/ai.js',     // SN.ai
+  'src/core/ops.js',    // SN.ops (Fotobericht, Lieferung, Wochenplan)
 ];
 const BOOT = 'src/ui/boot.js';
 

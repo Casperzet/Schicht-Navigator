@@ -71,7 +71,7 @@
   const fab = () => ({ label: 'Senden', icon: 'send', act: 'send-sheet' });
   ui.registerView('live', { label: 'Live', icon: 'users', groups: ['admin'], order: 10, render, fab,
     badge: (me) => C.hotspots(SN.clock.now()).filter((h) => h.level >= 2).length });
-  ui.registerView('team', { label: 'Team', icon: 'users', groups: ['lead'], order: 22, render, fab });
+  ui.registerView('team', { label: 'Team', icon: 'users', groups: ['lead'], order: 22, render, fab, show: () => false });
 
   ui.onChange('live-q', (el) => ui.sub('liveQ', el.value));
   ui.onChange('live-dept', (el) => ui.sub('liveDept', el.value));

@@ -311,6 +311,100 @@
     };
   }
 
+  /* ---------- Backend: eigener Server (SSE + REST) ------------------------- */
+  // cfg = {url: 'https://…', key: 'Filial-Schlüssel'}. Server ist die Wahrheit; eigene Änderungen
+  // werden sofort lokal gezeigt und vom Server per Event bestätigt. Ohne Netz: Warteschlange.
+  function serverBackend(cfg) {
+    const base = String(cfg.url || '').replace(/\/+$/, '');
+    const hdr = (json) => Object.assign(cfg.key ? { Authorization: 'Bearer ' + cfg.key } : {}, json ? { 'Content-Type': 'application/json' } : {});
+    const OUTBOX = 'outbox.' + base;
+    let es = null, retryT = null, stopped = false;
+    let outbox = U.ls.get(OUTBOX, []);
+    const saveOutbox = () => U.ls.set(OUTBOX, outbox);
+
+    function applyRemote(col, id, doc) {
+      if (!S.cache[col]) return;
+      if (doc) S.cache[col].set(id, withId(id, U.clone(doc))); else S.cache[col].delete(id);
+      touch(col);
+    }
+    async function snapshot() {
+      const r = await fetch(base + '/api/snapshot', { headers: hdr() });
+      if (r.status === 401) { const e = new Error('unauthorized'); e.code = 'not_granted'; throw e; }
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      for (const col of COLS) {
+        S.cache[col] = new Map();
+        for (const d of (j.cols && j.cols[col]) || []) S.cache[col].set(d.id, withId(d.id, U.clone(d)));
+        S.loaded[col] = true; touch(col);
+      }
+      // noch nicht übertragene eigene Änderungen wieder darüberlegen
+      for (const o of outbox) applyLocal(o.col, o.id, o.op, o.data);
+    }
+    function listen() {
+      if (es) es.close();
+      es = new EventSource(base + '/api/events' + (cfg.key ? '?key=' + encodeURIComponent(cfg.key) : ''));
+      es.onopen = () => { setStatus('live'); flushOutbox(); };
+      es.onmessage = (ev) => { try { const m = JSON.parse(ev.data); if (!outbox.some((o) => o.col === m.col && o.id === m.id)) applyRemote(m.col, m.id, m.doc); } catch (e) { /* ignorieren */ } };
+      es.onerror = () => {
+        setStatus('offline');
+        if (es && es.readyState === 2 && !stopped) { clearTimeout(retryT); retryT = setTimeout(() => resync(), 4000); }
+      };
+    }
+    async function resync() { try { await snapshot(); listen(); } catch (e) { setStatus('offline'); retryT = setTimeout(resync, 6000); } }
+    async function sendOne(o) {
+      const u = base + '/api/doc/' + o.col + '/' + encodeURIComponent(o.id);
+      const r = await fetch(u, { method: o.op === 'del' ? 'DELETE' : o.op === 'put' ? 'PUT' : 'PATCH', headers: hdr(true), body: o.op === 'del' ? undefined : JSON.stringify(o.data) });
+      if (r.status === 401) return { ok: false, code: 'not_granted' };
+      if (!r.ok) return { ok: false, code: r.status === 413 ? 'invalid_argument' : 'unavailable', fatal: r.status >= 400 && r.status < 500 };
+      return { ok: true };
+    }
+    let flushing = false;
+    async function flushOutbox() {
+      if (flushing) return; flushing = true;
+      try {
+        while (outbox.length) {
+          let r;
+          try { r = await sendOne(outbox[0]); } catch (e) { r = { ok: false, code: 'unavailable' }; }
+          if (!r.ok && !r.fatal) { setStatus('offline'); break; }
+          outbox.shift(); saveOutbox();
+        }
+      } finally { flushing = false; }
+    }
+    window.addEventListener('online', () => { flushOutbox(); });
+    return {
+      async start() {
+        setStatus('loading');
+        try { await snapshot(); } catch (e) {
+          if (e.code === 'not_granted') { emitError('not_granted', {}); throw e; }
+          // offline gestartet: zuletzt bekannte Daten gibt es nicht – leer starten, später nachladen
+          for (const col of COLS) S.loaded[col] = true;
+          setStatus('offline'); retryT = setTimeout(resync, 5000); return;
+        }
+        listen();
+      },
+      async write(col, id, op, data) {
+        const o = { col, id, op, data: data ? U.clone(data) : null };
+        if (outbox.length) { outbox.push(o); saveOutbox(); flushOutbox(); return { ok: true, queued: true }; }
+        try {
+          const r = await sendOne(o);
+          if (r.ok || r.fatal) return r;
+        } catch (e) { /* Netz weg */ }
+        outbox.push(o); saveOutbox(); setStatus('offline');
+        return { ok: true, queued: true };
+      },
+      get(col, id) { return Promise.resolve(S.cache[col].get(id) || null); },
+      stop() { stopped = true; if (es) es.close(); clearTimeout(retryT); },
+      /** Foto hochladen → absolute URL (mit Schlüssel, damit <img> lädt) */
+      async upload(blob) {
+        const r = await fetch(base + '/api/media', { method: 'POST', headers: Object.assign(hdr(), { 'Content-Type': blob.type || 'image/jpeg' }), body: blob });
+        if (!r.ok) throw new Error('Upload fehlgeschlagen (' + r.status + ')');
+        const j = await r.json();
+        return base + j.url + (cfg.key ? '?key=' + encodeURIComponent(cfg.key) : '');
+      },
+      pending: () => outbox.length,
+    };
+  }
+
   /* ---------- Start ------------------------------------------------------ */
   /** Ist der Filialbetrieb möglich? → {db: boolean} */
   async function detect() { return { db: !!(await useDb()) }; }
@@ -327,6 +421,13 @@
     resetCache();
     S.ready = false; S.readOnly = false; S.status = 'loading';
     let fallback = false;
+    if (mode === 'server') {
+      S.mode = 'server';
+      S.backend = serverBackend(opts.server || {});
+      try { await S.backend.start(); } catch (e) { S.backend.stop(); return { ok: false, mode: 'server', code: e.code || 'unavailable' }; }
+      S.ready = true;
+      return { ok: true, mode: 'server', status: S.status };
+    }
     if (mode === 'db') {
       const db = await useDb();
       if (db) {
@@ -356,6 +457,15 @@
     return { ok: true, mode: 'demo', status: S.status, fallback };
   }
 
+  /**
+   * Foto speichern → URL zum Anzeigen. Server: echte Datei auf dem Server.
+   * Sonst (Demo, Claude-db): verkleinerte data:-URL im Dokument (db-Limit 256 KiB).
+   */
+  async function upload(blob, dataUrl) {
+    if (S.backend && S.backend.upload) return S.backend.upload(blob);
+    return dataUrl;
+  }
+
   /* ---------- Viewer-Einstellungen (zuletzt genutztes Konto) ------------- */
   const prefs = {
     async get() {
@@ -381,7 +491,8 @@
     get readOnly() { return S.readOnly; },
     get ready() { return S.ready; },
     viewer,
-    detect, init, sub, list, peek, get, put, patch, del, prefs,
+    detect, init, sub, list, peek, get, put, patch, del, prefs, upload,
+    get pending() { return S.backend && S.backend.pending ? S.backend.pending() : 0; },
     onStatus(cb) { S.statusL.add(cb); return () => S.statusL.delete(cb); },
     onError(cb) { S.errorL.add(cb); return () => S.errorL.delete(cb); },
     /** Wartet, bis alle anstehenden Benachrichtigungen ausgeliefert sind (Tests). */

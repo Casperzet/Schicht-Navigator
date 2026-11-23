@@ -233,6 +233,14 @@
       body: 'Kühlregal MoPro piept ab und zu – Technik ist informiert. 3 Rollcontainer Getränke stehen noch im Lager.',
       summary: { text: '2 offene Aufträge, 1 Posten Restware', tasks: [], reports: [], cleaning: [], rest: [] }, to: { type: 'person', ids: nextSl } });
 
+    /* --- Fotoberichte Schichtleitung → Filialleitung --- */
+    const svgShot = (bg, rows) => 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200"><rect width="320" height="200" fill="' + bg + '"/>'
+      + [0, 1, 2].map((r) => '<rect x="10" y="' + (20 + r * 60) + '" width="300" height="6" fill="#444"/>' + Array.from({ length: 9 }, (_, i) => '<rect x="' + (14 + i * 33) + '" y="' + (26 + r * 60) + '" width="28" height="' + (rows[r] && i % rows[r] === 0 ? 0 : 44) + '" rx="3" fill="' + ['#e10915', '#ffffff', '#222222'][(i + r) % 3] + '" stroke="#999"/>').join('')).join('') + '</svg>');
+    const fls = staff.filter((e) => e.role === 'fl' || e.role === 'sfl').map((e) => e.id);
+    mk({ kind: 'photo', cat: 'promo', from: by('Julia Becker'), createdAt: T - 50 * MIN, title: '🏷️ Aktion / Werbung', dept: 'Obst und Gemüse', body: 'Aktionsfläche Erdbeeren steht, Preisschilder sind dran.', photos: [svgShot('#f4f4f4', [])], to: { type: 'person', ids: fls }, seen: { [fls[0]]: T - 45 * MIN }, thread: [{ by: fls[0], at: T - 44 * MIN, type: 'msg', text: '👍 Passt so' }] });
+    mk({ kind: 'photo', cat: 'order', from: by('Kemal Aydın'), createdAt: T - 18 * MIN, title: '🧺 Regal / Ordnung', dept: 'Drogerie', body: 'Lücken bei Waschmittel, Nachschub kommt mit der KKP um 11.', photos: [svgShot('#efefef', [2, 0, 3])], to: { type: 'person', ids: fls } });
+    mk({ kind: 'photo', cat: 'goods', from: by('Natalia Wójcik'), createdAt: T - 6 * MIN, u: true, title: '📦 Ware / Lieferung', dept: 'Wareneinnahme', body: '3 KKP mit gemischter Ware für 5 Abteilungen stehen noch an der Rampe.', photos: [svgShot('#e9e9e9', [0, 4, 0]), svgShot('#f2f2f2', [3, 3, 3])], to: { type: 'person', ids: fls } });
+
     /* --- Schichtanfragen (S2) --- */
     mk({ kind: 'shiftreq', from: sl('Drogerie'), createdAt: T - 2 * HOUR, title: 'Kannst du Sa Spät übernehmen?', body: 'Wir sind am Samstag knapp besetzt.', req: { day: 'Sa', shift: 'Spät', swap: false }, to: { type: 'person', ids: [anna] } });
     const a1 = inDept('Getränkeabteilung')[1], a2 = inDept('Getränkeabteilung')[2];
@@ -298,6 +306,12 @@
       { id: 'demo-g1', truck: 'demo-lkw1', kind: 'normal', dept: 'Konserven', name: 'Gurken im Glas', pt: 'Europalette', zone: 'Regallager A', pal: 2, kkp: 1, disp: 0, carts: 3, done: 1, codes: ['W-100231'] },
       { id: 'demo-g2', truck: 'demo-lkw1', kind: 'werbung', dept: 'Drogerie', name: 'Duschgel Aktion KW47', pt: 'Displaypalette', zone: 'Werbelager W1', pal: 1, kkp: 0, disp: 4, carts: 4, done: 0, codes: [] },
     ];
+    // Prognose der Woche (Wochenplan): erwartete KKP/Paletten/Boxen je Tag
+    const mon = U.startOfDay(T) - ((new Date(T).getDay() + 6) % 7) * U.DAY;
+    [[10, 4, 8, 5], [6, 2, 5, 4], [12, 5, 10, 5], [7, 3, 6, 4], [16, 6, 12, 5], [9, 2, 6, 4]].forEach(([kkp, pal, box, avg], wd) => {
+      const d = U.fmt.dayKey(mon + wd * U.DAY + 12 * HOUR);
+      goods.push({ id: "fc-" + d, d, kkp, pal, box, avg });
+    });
     const rest = [{ id: 'demo-r1', dept: 'Getränkeabteilung', name: 'Mineralwasser 6er, 3 Kisten', place: 'Lager Gang B', date: day, by: getr, at: T - 2 * HOUR, done: false }];
     const breakage = [{ id: 'demo-b1', reason: 'Glasbruch', dept: 'Konserven', name: 'Gurken im Glas', qty: 2, by: p1('Konserven'), at: T - 3 * HOUR }];
     const log = [{ id: day, d: day, entries: [

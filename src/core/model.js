@@ -84,7 +84,7 @@
   /* ---------- Vorgänge (M1) -------------------------------------------- */
   const KINDS = {
     post: 'Anweisung', task: 'Auftrag', report: 'Meldung', call: 'Schnellruf', sos: 'SOS',
-    handover: 'Schichtübergabe', shiftreq: 'Schichtanfrage', absence: 'Ausfall',
+    handover: 'Schichtübergabe', shiftreq: 'Schichtanfrage', absence: 'Ausfall', photo: 'Fotobericht',
   };
   const STATES = {
     sent: 'Gesendet', seen: 'Gesehen', taken: 'Übernommen', done: 'Erledigt', closed: 'Geschlossen',
@@ -94,12 +94,12 @@
 
   // Eskalationsfristen in Minuten (Standard, änderbar in settings.main.deadlines)
   const DEFAULT_DEADLINES = {
-    urgent: 3, absence: 5, defect: 5, call: 2, minor: 15, other: 20, post: 30, postUrgent: 10, sos: 2, handover: 15,
+    urgent: 3, absence: 5, defect: 5, call: 2, minor: 15, other: 20, post: 30, postUrgent: 10, sos: 2, handover: 15, photo: 20,
   };
   const DEADLINE_LABELS = {
     urgent: '🔥 Meldung', absence: 'Personalausfall', defect: 'Defekt / Sicherheit', call: 'Kasse-/Info-Ruf',
     minor: 'Lücke / Preis / Reinigung', other: 'Sonstiges', post: 'Anweisung mit Quittung', postUrgent: '🔥 Anweisung mit Quittung',
-    sos: 'SOS ohne Antwort', handover: 'Schichtübergabe',
+    sos: 'SOS ohne Antwort', handover: 'Schichtübergabe', photo: 'Fotobericht ungesehen',
   };
 
   // Meldungs-Kategorien (M4). route = erste zuständige Stufe; dept = feste Abteilung
@@ -396,6 +396,7 @@
       case 'call': return d.call;
       case 'sos': return d.sos;
       case 'handover': return d.handover;
+      case 'photo': return item.u ? d.postUrgent : d.photo;
       case 'post': return item.ackMin || (item.u ? d.postUrgent : d.post);
       case 'task': return item.escalate ? (item.u ? d.urgent : d.minor) : 0;
       default: return d.other;

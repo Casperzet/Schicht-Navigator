@@ -41,7 +41,7 @@
       + P.btn(M.isLead(me) ? 'Schicht anfragen' : 'Tausch vorschlagen', 'sr-new', {}, 'ghost', 'plus');
 
     // Plan
-    h += P.sec('Mein Plan') + week(days, now)
+    h += P.sec('Mein Plan') + week(days, now) + P.btn('Wochenplan der Filiale', 'go-week', {}, 'ghost', 'tasks')
       + '<div class="sn-row" style="gap:8px;margin-top:8px"><label class="sn-btn sn-btn--secondary" for="plan-photo">' + icon('camera') + '<span>Plan-Foto lesen</span></label><input type="file" id="plan-photo" accept="image/*" capture="environment" hidden data-change="plan-photo">'
       + P.btn('Bearbeiten', 'plan-edit', {}, 'ghost') + '</div>';
 
@@ -64,7 +64,7 @@
     return h;
   }
 
-  ui.registerView('me', { label: 'Ich', icon: 'user', groups: ['emp', 'lead', 'admin', 'clean'], order: 90, render, show: (me) => !M.canAiAssist(me),
+  ui.registerView('me', { label: 'Ich', icon: 'user', groups: ['emp', 'lead', 'admin', 'clean'], order: 90, render, show: (me) => !M.isAdmin(me),
     badge: (me) => SN.store.list('items').filter((it) => it.kind === 'shiftreq' && !C.isFinal(it) && C.isRecipient(it, me.id) && it.state !== 'taken').length });
 
   ui.on('abs', (el) => {

@@ -51,7 +51,7 @@
       h += P.sec('Für dich', inb.length) + (inb.length ? P.list(inb.slice(0, 4), me, now) + (inb.length > 4 ? '<button type="button" class="sn-btn sn-btn--ghost sn-btn--block" data-go="inbox">Alle ' + inb.length + ' im Eingang</button>' : '') : P.empty('Nichts offen', 'Neue Meldungen erscheinen hier sofort.', true));
     }
     const mine = C.myTasks(me.id);
-    if (M.isLead(me)) h += '<div class="sn-row" style="gap:8px;margin-top:12px">' + P.btn('Meine Aufträge', 'go-tasks', {}, 'secondary', 'tasks') + P.btn('Problem melden', 'go-report', {}, 'secondary', 'report') + '</div>';
+    if (M.isLead(me)) h += '<div class="sn-quicklinks">' + P.btn('Fotobericht', 'go-photo', {}, 'primary', 'camera') + P.btn('Mein Team', 'go-team', {}, 'secondary', 'users') + P.btn('Lieferung', 'go-ware', {}, 'secondary', 'plus') + P.btn('Wochenplan', 'go-week', {}, 'secondary', 'tasks') + P.btn('Meine Aufträge', 'go-tasks', {}, 'ghost', 'tasks') + P.btn('Problem melden', 'go-report', {}, 'ghost', 'report') + '</div>';
     h += P.sec('Meine Aufträge', mine.length) + (mine.length ? P.list(mine.slice(0, 3), me, now) + (mine.length > 3 ? '<button type="button" class="sn-btn sn-btn--ghost sn-btn--block" data-go="tasks">Alle Aufträge</button>' : '') : P.empty('Keine Aufträge', 'Freie Aufträge findest du unter „Aufträge“.', true));
     const myRep = C.sentBy(me.id).filter((it) => (it.kind === 'report' || it.kind === 'absence' || it.kind === 'call') && !C.isFinal(it));
     if (myRep.length) h += P.sec('Meine offenen Meldungen', myRep.length) + P.list(myRep, me, now, '', { compact: true });
@@ -67,6 +67,9 @@
   });
   ui.on('go-report', () => ui.go('report'));
   ui.on('go-tasks', () => ui.go('tasks'));
+  ui.on('go-photo', () => ui.go('photo', {}));
+  ui.on('go-team', () => ui.go('team', {}));
+  ui.on('go-ware', () => ui.go('ware', {}));
 
   /* ---------- Pause -------------------------------------------------------- */
   ui.on('pause-start', async () => { const r = await SN.dist.startPause(SN.session.id); ui.result(r, r.ok ? 'Gute Pause!' : ''); });

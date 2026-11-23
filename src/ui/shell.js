@@ -157,7 +157,7 @@
     const list = navFor(me);
     // Zugriff: Gruppe passt (auch ohne eigenen Platz in der Navigation)
     const cur = views[st.tab];
-    if (!cur || !cur.groups.includes(M.group(me)) || (cur.strict && cur.show && !cur.show(me))) st.tab = list[0] ? list[0].tab : null;
+    if (!cur || !cur.groups.includes(M.group(me)) || (cur.allow && !cur.allow(me))) st.tab = list[0] ? list[0].tab : null;
     const view = views[st.tab];
     nav(me);
     fab(me, view);

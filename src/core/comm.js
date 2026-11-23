@@ -28,7 +28,7 @@
   const isFinal = (it) => M.FINAL_STATES.includes(it.state);
   const ok = (extra) => Object.assign({ ok: true }, extra);
   const fail = (reason) => Promise.resolve({ ok: false, reason });
-  const PREFIX = { post: 'po', task: 'ta', report: 're', call: 'ca', sos: 'so', handover: 'ho', shiftreq: 'sr', absence: 'ab' };
+  const PREFIX = { post: 'po', task: 'ta', report: 're', call: 'ca', sos: 'so', handover: 'ho', shiftreq: 'sr', absence: 'ab', photo: 'ph' };
 
   /** Empfänger eines Vorgangs (ohne Absender); Auftrag: Besitzer oder Abteilung */
   function recipients(it) {
@@ -77,6 +77,7 @@
       case 'sos': return Object.keys(it.answers || {}).length > 0;
       case 'post': return !it.needAck || ackStats(it).open.length === 0;
       case 'handover': return Object.keys(it.acks || {}).length > 0;
+      case 'photo': return Object.keys(it.seen || {}).some((id) => id !== it.from) || it.state === 'taken';
       case 'task': return !it.escalate || it.state === 'done';
       default: return true;
     }
@@ -612,7 +613,7 @@
   /** Sortierung: 🔥 zuerst, dann früheste Frist, dann neueste */
   const dueOf = (it) => it.due || it.ackDue || Infinity;
   const urgentFirst = (a) => a.slice().sort((x, y) => (y.u ? 1 : 0) - (x.u ? 1 : 0) || (dueOf(x) - dueOf(y)) || (y.createdAt - x.createdAt));
-  const INBOX_KINDS = ['report', 'absence', 'call', 'sos', 'handover', 'shiftreq'];
+  const INBOX_KINDS = ['report', 'absence', 'call', 'sos', 'handover', 'shiftreq', 'photo'];
 
   /** Eingang: Vorgänge, die mich betreffen (Empfänger, Eskalationsstufe, Besitzer), offen */
   function inbox(empId) {
@@ -620,9 +621,10 @@
       && (involved(it).includes(empId))));
   }
   /** Meine Aufträge (offen), dringend zuerst, dann Frist */
-  const myTasks = (empId) => urgentFirst(items().filter((it) => it.kind === 'task' && it.owner === empId && it.state !== 'done'));
+  const notFuture = (it) => !it.plannedFor || it.plannedFor <= U.fmt.dayKey(now0());
+  const myTasks = (empId) => urgentFirst(items().filter((it) => it.kind === 'task' && it.owner === empId && it.state !== 'done' && notFuture(it)));
   /** Freie Aufträge (optional Abteilung) */
-  const freeTasks = (dept) => urgentFirst(items().filter((it) => it.kind === 'task' && !it.owner && !isFinal(it) && (!dept || it.dept === dept)));
+  const freeTasks = (dept) => urgentFirst(items().filter((it) => it.kind === 'task' && !it.owner && !isFinal(it) && notFuture(it) && (!dept || it.dept === dept)));
   /** Erledigte Aufträge einer Person (neueste zuerst) */
   const doneTasks = (empId) => U.sortBy(items().filter((it) => it.kind === 'task' && it.state === 'done' && it.owner === empId), (it) => -(it.doneAt || 0));
   /** Zu quittieren: Pflicht-Infos und Übergaben, die ich noch nicht quittiert habe */
