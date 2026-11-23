@@ -20,7 +20,7 @@
     const cfg = O.effortCfg();
     const us = units();
     const p = O.planDelivery(us, now);
-    let h = '<section class="sn-card sn-goods"><h2 class="sn-section-title" style="margin-top:0">' + icon('truck') + ' Was ist angekommen?</h2>'
+    let h = '<section class="sn-card sn-goods"><h2 class="sn-section-title" style="margin-top:0"><span class="sn-inline">' + icon('truck') + 'Was ist angekommen?</span></h2>'
       + '<div class="sn-field"><label class="sn-label" for="gd-title">Lieferung</label><input class="sn-input" id="gd-title" value="' + esc(st.title) + '" data-change="gd-title"></div>'
       + stepper('kkp', 'KKP', cfg.kkp + ' Min + ' + cfg.kkpDept + ' je Abteilung', 'cart')
       + stepper('pal', 'Paletten', cfg.pal + ' Min je Palette', 'pallet')

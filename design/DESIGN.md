@@ -7,7 +7,7 @@ Wer `tokens.css` oder `components.css` ändert, muss die beiden `<style id="sn-t
 
 1. **Wichtigstes zuerst.** Reihenfolge auf jeder Seite: SOS → Eskalation → Quittierpflicht → eigene Aufgaben → Rest.
 2. **Ein Daumen, Handschuhe.** Jedes Bedienelement ≥ 48 px (`--sn-touch`), Primäraktionen 56 px, „Quittieren“/SOS 64 px. Aktionen unten (`.sn-actionbar`, Sheet-Fuß, FAB) statt oben.
-3. **Nie nur Farbe.** Dringend = 🔥 + Wort + dicker Balken. Eskaliert = Warnstreifen + „Eskaliert · Stufe n“. Lesestatus = Haken-Form + Wort. Präsenz = Kreis / Quadrat / Ring.
+3. **Nie nur Farbe.** Dringend = Flammen-Icon + Wort + dicker Balken. Eskaliert = Warnstreifen + „Eskaliert · Stufe n“. Lesestatus = Haken-Form + Wort. Präsenz = Kreis / Quadrat / Ring.
 4. **Ruhe.** Weiß/Grau als Fläche, Rot nur für Marke, Primäraktion und Dringlichkeit. Maximal **eine** rote Primäraktion pro Karte bzw. Bildschirmbereich.
 5. **Immer Text am Icon.** Auch in Kopfzeile, Bottom-Nav und Icon-Buttons (`.sn-btn--icon`).
 6. **Deutsch, kurz, konkret.** Verben auf Buttons („Quittieren“, „Weitergeben“), Uhrzeiten statt „bald“ („bis 10:30 · noch 43 Min“).
@@ -25,7 +25,7 @@ Wer `tokens.css` oder `components.css` ändert, muss die beiden `<style id="sn-t
 
 Komponenten verwenden nur **semantische** Tokens (`--sn-surface`, `--sn-urgent-fg` …), nie Rohfarben – nur so funktioniert der Dunkelmodus.
 Theme: automatisch über `prefers-color-scheme`; Override mit `<html data-theme="light">` bzw. `"dark"`.
-Icons: inline SVG-Sprite (`<svg class="sn-icon"><use href="#i-check"/></svg>`), Strich 2 px, 24 px – Sprite steht oben in `showcase.html`.
+Icons: inline SVG-Sprite (`<svg class="sn-icon"><use href="#i-check"/></svg>`, im Code `SN.ui.icon('check')`), 24-px-Raster, Strich 1,75 px, runde Enden, Outline; `-fill`-Varianten nur für „aktiv“ (Navigation). Quelle: `src/ui/icons.svg`. Keine Emojis in der Oberfläche (`test/icons.test.js`).
 
 ## Tokens (Kurzüberblick)
 
@@ -250,3 +250,12 @@ Ziel: Text ≥ 4,5 : 1, Bedienelement-Kanten/Fokus ≥ 3 : 1. Alle Paare bestehe
 | Fokusring (≥ 3) | `focus` / `bg` | 5,71 | 9,17 |
 
 Hinweis: Markenrot `#e10915` mit Weiß liegt bei 4,94 : 1 – reicht für AA, aber nicht für AAA. Rot deshalb nie als Text auf hellem Grau verwenden; dafür gibt es `--sn-accent-text` (#c00812). Die Tabelle wird in `showcase.html` (Abschnitt 7) live aus den Tokens neu berechnet.
+
+
+## Glas und Bewegung (Abschnitt 19 in `components.css`)
+
+- `.sn-glass` (+ `--dark`, `--red`): halbtransparent, Weichzeichner 14–20 px, 1-px-Lichtkante, weicher Schatten. Ohne `backdrop-filter` deckender Hintergrund (`@supports`).
+- `.sn-iconbadge` (Größen `--sm/--lg`, Farben `--red --dark --soft --ok --warn --info --urgent`, `--round`), `.sn-stat` (Kennzahl, `__value/__label/__delta/__trend`), `.sn-section` (Abschnitt mit Icon-Titel), `.sn-pill` (Glas-Chip), `.sn-segmented` (Glas-Umschalter, `.sn-segment` sieht gleich aus).
+- Header: Verlauf Rot → dunkleres Rot; Bottom-Navigation schwebt als Glas-Leiste, aktiver Eintrag mit gleitendem Indikator und gefülltem Icon; Sheets als Glas-Panel mit Federkurve.
+- Tokens: `--sn-glass-bg / -bg-strong / -edge / -hi / -line / -drop / -blur`, `--sn-nav-pill`.
+- Bewegung: Ansichtswechsel Fade + Slide (220 ms), Liste gestaffelt (`.sn-main.is-enter`, max. 210 ms Versatz), Zahlen zählen 600 ms hoch, Press-Feedback `scale(.98)`. Nur `opacity`/`transform`, nie blockierend; bei `prefers-reduced-motion` aus.

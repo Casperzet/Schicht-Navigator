@@ -22,7 +22,7 @@
       + '<div class="sn-cats">' + M.REPORT_CATS.map((x) => '<button type="button" class="sn-cat" data-act="rep-cat" data-k="' + x.key + '" aria-pressed="' + (x.key === cat) + '">' + icon(x.icon, 'sn-icon--lg') + '<span>' + esc(x.label) + '</span>' + '</button>').join('') + '</div>'
       + '<div class="sn-quicklinks">' + P.btn('Restware erfassen', 'rest-new', {}, 'secondary', 'plus') + P.btn('Bruch erfassen', 'br-new', {}, 'secondary', 'plus') + '</div>';
     if (c) {
-      h += '<section class="sn-card" style="padding:14px;margin-top:12px" id="rep-form"><h2 class="sn-section-title" style="margin-top:0">' + icon(c.icon) + esc(c.label) + '</h2>'
+      h += '<section class="sn-card" style="padding:14px;margin-top:12px" id="rep-form"><h2 class="sn-section-title" style="margin-top:0"><span class="sn-inline">' + icon(c.icon) + esc(c.label) + '</span></h2>'
         + '<p class="sn-small">Geht an: <b>' + esc(whoGets(c.key, dept, me, now)) + '</b> · eskaliert nach ' + U.fmt.dur(M.settings().deadlines[c.dl] || 15) + ' ohne Reaktion</p>'
         + (c.dept ? '' : '<div class="sn-field"><label class="sn-label" for="rep-dept">Abteilung</label><select class="sn-select" id="rep-dept" data-change="rep-dept">' + M.DEPTS.map((d) => '<option' + (d === dept ? ' selected' : '') + ' value="' + esc(d) + '">' + esc(d) + '</option>').join('') + '</select></div>')
         + '<div class="sn-row"><label class="sn-btn sn-btn--secondary sn-btn--icon" for="rep-photo">' + icon('camera') + '<span>Foto (' + photos.length + '/4)</span></label><input type="file" id="rep-photo" accept="image/*" capture="environment" multiple hidden data-change="rep-photo">'

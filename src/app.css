@@ -223,3 +223,10 @@ html, body { height: 100%; overflow: hidden; margin: 0; }
 .sn-view-loading { opacity: .6; }
 .sn-login { padding: 20px 16px; }
 .sn-login > :first-child { margin-top: 0; }
+.sn-main:focus, .sn-main:focus-visible { outline: none; }
+.sn-nav__glider.is-none { opacity: 0; }
+.sn-section-title .sn-icon { color: var(--sn-accent-text); }
+.sn-badge--urgent { display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; padding: 0 7px 0 5px; }
+.sn-list__title { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.sn-list__sub { display: block; }
+.sn-header__action[hidden] { display: none; }

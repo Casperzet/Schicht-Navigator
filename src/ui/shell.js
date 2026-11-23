@@ -116,7 +116,7 @@
     if (!me) { el.innerHTML = ''; el.hidden = true; return; }
     el.hidden = false;
     const items = navFor(me);
-    const cur = Math.max(0, items.findIndex((v) => v.tab === st.tab));
+    const cur = items.findIndex((v) => v.tab === st.tab);
     el.style.setProperty('--n', String(items.length));
     el.innerHTML = '<span class="sn-nav__glider" aria-hidden="true"></span>' + items.map((v) => {
       const b = v.badge ? v.badge(me) : 0;
@@ -125,8 +125,8 @@
         + '<span class="sn-nav__icon">' + (st.tab === v.tab ? iconActive(v.icon || 'home') : icon(v.icon || 'home')) + (n ? '<span class="sn-badge' + (urg ? ' sn-badge--urgent' : '') + '">' + (n > 99 ? '99+' : n) + '</span>' : '') + '</span>'
         + esc(v.label) + '</button>';
     }).join('');
-    glide(el.firstChild, cur, st.navIdx);
-    st.navIdx = cur;
+    if (cur < 0) el.firstChild.classList.add('is-none');
+    else { glide(el.firstChild, cur, st.navIdx); st.navIdx = cur; }
   }
 
   function fab(me, view) {
