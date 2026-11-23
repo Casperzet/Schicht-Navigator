@@ -47,8 +47,10 @@
 .sn-ov-actions .sn-btn { flex: 1 1 auto; min-height: 48px; }
 
 /* Anwesenheit */
-.sn-ov-away { flex-wrap: wrap; }
-.sn-ov-away .sn-chip { margin-left: auto; white-space: normal; }
+.sn-ov-away { flex-wrap: wrap; padding-top: 8px; padding-bottom: 8px; }
+.sn-ov-away .sn-list__body { flex: 1 1 160px; }
+.sn-ov-away .sn-chip { order: 3; white-space: normal; margin-left: 44px; flex: 1 1 100%; }
+.sn-ov-away .sn-btn { order: 2; }
 .sn-ov-depts { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .sn-ov-dept { width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; text-align: left; min-height: 56px; padding: 8px 12px; font: inherit; color: var(--sn-text); background: var(--sn-surface); border: 1px solid var(--sn-border); border-radius: var(--sn-radius-md, 12px); cursor: pointer; }
 .sn-ov-dept.is-short { border: 2px solid var(--sn-warn-line); background: var(--sn-warn-bg); color: var(--sn-warn-fg); }

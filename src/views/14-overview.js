@@ -115,7 +115,7 @@
   }
   function deptRow(r, sel) {
     const pct = r.need ? Math.min(100, Math.round(r.have / r.need * 100)) : 100;
-    const txt = r.short ? 'Unterbesetzt: ' + r.short + ' fehlt' : r.over ? 'Passt, +' + r.over : 'Passt';
+    const txt = r.short ? 'Unterbesetzt: ' + r.short + ' fehlt' : 'Passt';
     return '<li><button type="button" class="sn-ov-dept' + (r.short ? ' is-short' : '') + (sel === r.dept ? ' is-sel' : '') + '" data-act="ap-dept" data-dept="' + esc(r.dept) + '" aria-pressed="' + (sel === r.dept) + '">'
       + '<span class="sn-ov-dept__name">' + icon(DEPT_ICON[r.dept] || 'tag') + '<span>' + esc(r.dept) + '</span></span>'
       + '<span class="sn-ov-dept__n"><b>' + r.have + '</b> von ' + r.need + '</span>'
@@ -137,7 +137,7 @@
     const hints = [];
     for (const s of p.short) hints.push('<div class="sn-alert sn-alert--warn sn-alert--card"><span class="sn-alert__icon">' + icon('alert') + '</span><p class="sn-alert__title">' + esc(s.dept) + ' unterbesetzt: ' + s.have + ' von ' + s.need + '</p>'
       + (p.live ? '<div class="sn-alert__actions">' + P.btn('Verstärkung holen', 'ov-reinf', { dept: s.dept }, 'primary', 'users') + '</div>' : '<p class="sn-alert__text">Bitte rechtzeitig Plan oder Einspringer klären.</p>') + '</div>');
-    if (p.pauseDue.length) hints.push('<div class="sn-alert sn-alert--info sn-alert--card"><span class="sn-alert__icon">' + icon('coffee') + '</span><p class="sn-alert__title">Pause fällig: ' + esc(p.pauseDue.map(M.first).join(', ')) + '</p><p class="sn-alert__text">Seit 5,5 Std im Dienst ohne Pause. Bitte kurz erinnern.</p></div>');
+    if (p.pauseDue.length) hints.push('<div class="sn-alert sn-alert--info sn-alert--card"><span class="sn-alert__icon">' + icon('coffee') + '</span><p class="sn-alert__title">Pause fällig: ' + (p.pauseDue.length > 5 ? esc(U.fmt.count(p.pauseDue.length, 'Person', 'Personen')) : esc(p.pauseDue.map(M.first).join(', '))) + '</p><p class="sn-alert__text">Seit 5,5 Std im Dienst ohne Pause. Bitte kurz erinnern.</p></div>');
     if (p.pauseOver.length) hints.push('<div class="sn-alert sn-alert--warn sn-alert--card"><span class="sn-alert__icon">' + icon('coffee') + '</span><p class="sn-alert__title">Pause überzogen: ' + esc(p.pauseOver.map((x) => M.first(x.id)).join(', ')) + '</p><p class="sn-alert__text">Kurz nachfragen – ohne Vorwurf, vielleicht ist etwas passiert.</p></div>');
     if (hints.length) h += P.sec('Hinweise', hints.length) + hints.join('');
     // Abwesend
