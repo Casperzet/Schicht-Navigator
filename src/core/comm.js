@@ -100,7 +100,7 @@
     if (it.kind === 'task') it.ackDue = it.escalate && it.due ? it.due : null;
     else if (it.kind === 'post') it.ackDue = it.needAck ? now + min * MIN : null;
     else if (it.kind === 'shiftreq') it.ackDue = null;
-    else it.ackDue = now + min * MIN;
+    else it.ackDue = M.ackStart(it, now) + min * MIN;
     const rec = recipients(it);
     if (!rec.length && it.ackDue) it.ackDue = now; // niemand erreichbar → sofort eine Stufe höher
     it.esc = { level: 0, at: now, history: [{ level: 0, at: now, ids: rec }] };

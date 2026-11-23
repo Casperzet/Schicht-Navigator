@@ -403,6 +403,18 @@
     }
   }
 
+  /** Beginn der nächsten (oder laufenden) Schicht `name` ab Zeitpunkt ts */
+  function shiftStartFrom(name, ts) {
+    const sh = SHIFTS[name] || SHIFTS['Früh'];
+    const d = U.startOfDay(ts) + sh.s * U.HOUR;
+    return ts < d + (sh.e - sh.s) * U.HOUR ? d : d + U.DAY;
+  }
+  /** Frist-Start eines Vorgangs: Übergaben zählen ab Beginn der Empfangsschicht */
+  function ackStart(it, ts) {
+    if (it.kind === 'handover' && it.toShift) return Math.max(ts, shiftStartFrom(it.toShift, ts));
+    return ts;
+  }
+
   /** Nötige Zusagen für einen Ruf */
   function callNeed(type) {
     const s = settings();
@@ -419,6 +431,6 @@
     role, level, group, isLead, isAdmin, isClean, canAiAssist, inLeadChannel, groupOf, deptLabel,
     currentShift, nextShift, shiftWindow, isAway, inPause, onDuty, notifyAllowed, deptOf,
     shiftLeads, teamLeads, admins, adminOnDuty, branchLeads, cleaners, peopleFor,
-    responsibleFor, escalationChain, resolveTo, labelFor, maxLevel, deadlineMin, callNeed,
+    responsibleFor, escalationChain, resolveTo, labelFor, maxLevel, deadlineMin, callNeed, shiftStartFrom, ackStart,
   };
 })(window.SN = window.SN || {});

@@ -134,7 +134,7 @@
       const rec = (it.kind === 'task' && it.owner ? [it.owner] : resolve(it.to)).filter((id) => id !== it.from || it.kind === 'task');
       if (it.ackDue === undefined) {
         const m = M.deadlineMin(it);
-        it.ackDue = it.kind === 'task' ? (it.escalate ? it.due : null) : it.kind === 'post' && !it.needAck ? null : it.kind === 'shiftreq' ? null : it.createdAt + m * MIN;
+        it.ackDue = it.kind === 'task' ? (it.escalate ? it.due : null) : it.kind === 'post' && !it.needAck ? null : it.kind === 'shiftreq' ? null : M.ackStart(it, it.createdAt) + m * MIN;
       }
       it.esc = it.esc || { level: 0, at: it.createdAt, history: [{ level: 0, at: it.createdAt, ids: rec }] };
       items.push(it);

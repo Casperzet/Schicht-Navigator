@@ -187,7 +187,7 @@
         + '<div class="sn-field"><label class="sn-label" for="ai-who-' + i + '">Für ' + (f.who && !f.wid ? '<span class="sn-chip sn-chip--urgent">„' + esc(f.who) + '“ nicht gefunden</span>' : '') + '</label><select class="sn-select" id="ai-who-' + i + '"><option value="">Automatisch verteilen</option>' + U.sortBy(SN.dist.candidates(SN.clock.now()), (e) => e.name).map((e) => '<option value="' + e.id + '"' + (e.id === f.wid ? ' selected' : '') + '>' + esc(e.name) + '</option>').join('') + '</select></div></div>').join('')
         + P.btn('Alle senden und verteilen', 'ai-send', {}, 'primary', 'send') : '');
   }
-  ui.registerView('ai', { label: 'KI', icon: 'mic', groups: ['admin'], order: 60, render: aiRender, show: (me) => M.canAiAssist(me) });
+  ui.registerView('ai', { label: 'KI', icon: 'mic', groups: ['admin'], order: 60, render: aiRender, strict: true, show: (me) => M.canAiAssist(me) });
   ui.on('ai-go', async (el) => {
     const tx = String(ui.sheetVal('ai-text') || '').trim(); if (!tx) return ui.toast('Bitte zuerst sprechen oder tippen.', 'warn');
     el.disabled = true;

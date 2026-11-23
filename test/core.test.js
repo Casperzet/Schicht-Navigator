@@ -307,7 +307,11 @@ test('Schichtübergabe (M8): Zusammenfassung, Empfang quittieren, sonst Admin', 
   assert.strictEqual(SN.comm.get(h.id).state, 'done');
   assert.ok(!SN.comm.toAck(id('Markus Lehmann')).some((x) => x.id === h.id));
   const h2 = (await SN.comm.sendHandover(kemal, {})).item;
+  // Frist zählt erst ab Beginn der Empfangsschicht (Spät 14:00), nicht ab Versand
   at(15);
+  SN.comm.escalateDue();
+  assert.strictEqual(SN.comm.get(h2.id).esc.level, 0);
+  SN.clock.set(SN.model.shiftStartFrom('Spät', SN.clock.now()) + 16 * 60000);
   SN.comm.escalateDue();
   const e = SN.comm.get(h2.id).esc.history;
   assert.strictEqual(e[1].key, 'admin');

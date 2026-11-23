@@ -156,7 +156,8 @@
     if (!me) { nav(null); fab(null); byId('banners').innerHTML = ''; v.innerHTML = loginView(); return; }
     const list = navFor(me);
     // Zugriff: Gruppe passt (auch ohne eigenen Platz in der Navigation)
-    if (!views[st.tab] || !views[st.tab].groups.includes(M.group(me))) st.tab = list[0] ? list[0].tab : null;
+    const cur = views[st.tab];
+    if (!cur || !cur.groups.includes(M.group(me)) || (cur.strict && cur.show && !cur.show(me))) st.tab = list[0] ? list[0].tab : null;
     const view = views[st.tab];
     nav(me);
     fab(me, view);

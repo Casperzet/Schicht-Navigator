@@ -91,3 +91,5 @@ body { background: var(--sn-bg, #f4f4f5); }
 .sn-person-row > div { flex: 1; min-width: 0; }
 .sn-person-row p { margin: 0; }
 .sn-person-row .sn-muted { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Seite selbst scrollt nie – nur der Inhalt, Kopfzeile und Navigation bleiben stehen */
+html, body { height: 100%; overflow: hidden; margin: 0; }
