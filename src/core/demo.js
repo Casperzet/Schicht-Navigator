@@ -152,7 +152,7 @@
     const brief = mk({
       kind: 'post', briefing: true, needAck: true, from: fl, createdAt: T - 90 * MIN, u: false,
       to: { type: 'shift', ids: [sh] }, title: 'Kurzbriefing ' + sh + 'schicht',
-      body: '1. 🔥 Aktion Drogerie: Displays bis 10 Uhr aufbauen\n2. Kasse 3 ist defekt – bitte Kasse 4 nutzen\n3. Danke für den starken Samstag!',
+      body: '1. Dringend: Aktion Drogerie: Displays bis 10 Uhr aufbauen\n2. Kasse 3 ist defekt – bitte Kasse 4 nutzen\n3. Danke für den starken Samstag!',
     });
     ackSome(brief, 0.6, T - 85 * MIN);
     const plano = mk({
@@ -237,9 +237,9 @@
     const svgShot = (bg, rows) => 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200"><rect width="320" height="200" fill="' + bg + '"/>'
       + [0, 1, 2].map((r) => '<rect x="10" y="' + (20 + r * 60) + '" width="300" height="6" fill="#444"/>' + Array.from({ length: 9 }, (_, i) => '<rect x="' + (14 + i * 33) + '" y="' + (26 + r * 60) + '" width="28" height="' + (rows[r] && i % rows[r] === 0 ? 0 : 44) + '" rx="3" fill="' + ['#e10915', '#ffffff', '#222222'][(i + r) % 3] + '" stroke="#999"/>').join('')).join('') + '</svg>');
     const fls = staff.filter((e) => e.role === 'fl' || e.role === 'sfl').map((e) => e.id);
-    mk({ kind: 'photo', cat: 'promo', from: by('Julia Becker'), createdAt: T - 50 * MIN, title: '🏷️ Aktion / Werbung', dept: 'Obst und Gemüse', body: 'Aktionsfläche Erdbeeren steht, Preisschilder sind dran.', photos: [svgShot('#f4f4f4', [])], to: { type: 'person', ids: fls }, seen: { [fls[0]]: T - 45 * MIN }, thread: [{ by: fls[0], at: T - 44 * MIN, type: 'msg', text: '👍 Passt so' }] });
-    mk({ kind: 'photo', cat: 'order', from: by('Kemal Aydın'), createdAt: T - 18 * MIN, title: '🧺 Regal / Ordnung', dept: 'Drogerie', body: 'Lücken bei Waschmittel, Nachschub kommt mit der KKP um 11.', photos: [svgShot('#efefef', [2, 0, 3])], to: { type: 'person', ids: fls } });
-    mk({ kind: 'photo', cat: 'goods', from: by('Natalia Wójcik'), createdAt: T - 6 * MIN, u: true, title: '📦 Ware / Lieferung', dept: 'Wareneinnahme', body: '3 KKP mit gemischter Ware für 5 Abteilungen stehen noch an der Rampe.', photos: [svgShot('#e9e9e9', [0, 4, 0]), svgShot('#f2f2f2', [3, 3, 3])], to: { type: 'person', ids: fls } });
+    mk({ kind: 'photo', cat: 'promo', from: by('Julia Becker'), createdAt: T - 50 * MIN, title: 'Aktion / Werbung', dept: 'Obst und Gemüse', body: 'Aktionsfläche Erdbeeren steht, Preisschilder sind dran.', photos: [svgShot('#f4f4f4', [])], to: { type: 'person', ids: fls }, seen: { [fls[0]]: T - 45 * MIN }, thread: [{ by: fls[0], at: T - 44 * MIN, type: 'msg', text: 'Passt so' }] });
+    mk({ kind: 'photo', cat: 'order', from: by('Kemal Aydın'), createdAt: T - 18 * MIN, title: 'Regal / Ordnung', dept: 'Drogerie', body: 'Lücken bei Waschmittel, Nachschub kommt mit der KKP um 11.', photos: [svgShot('#efefef', [2, 0, 3])], to: { type: 'person', ids: fls } });
+    mk({ kind: 'photo', cat: 'goods', from: by('Natalia Wójcik'), createdAt: T - 6 * MIN, u: true, title: 'Ware / Lieferung', dept: 'Wareneinnahme', body: '3 KKP mit gemischter Ware für 5 Abteilungen stehen noch an der Rampe.', photos: [svgShot('#e9e9e9', [0, 4, 0]), svgShot('#f2f2f2', [3, 3, 3])], to: { type: 'person', ids: fls } });
 
     /* --- Schichtanfragen (S2) --- */
     mk({ kind: 'shiftreq', from: sl('Drogerie'), createdAt: T - 2 * HOUR, title: 'Kannst du Sa Spät übernehmen?', body: 'Wir sind am Samstag knapp besetzt.', req: { day: 'Sa', shift: 'Spät', swap: false }, to: { type: 'person', ids: [anna] } });

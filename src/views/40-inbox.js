@@ -1,6 +1,6 @@
 /* ==========================================================================
    Eingang (Leitung, Admin) + Senden (Anweisung, Auftrag, Kurzbriefing, Lob, Ruf)
-   Eingang: alles, was gerade bei mir liegt – zuerst Eskaliertes und 🔥.
+   Eingang: alles, was gerade bei mir liegt – zuerst Eskaliertes und Dringendes.
    Gesendet: eigene Anweisungen mit Quittungsleiste und „Nachfassen“.
    ========================================================================== */
 (function (SN) {
@@ -36,7 +36,7 @@
   /* ---------- Senden ----------------------------------------------------------- */
   let mode = 'post';
   const choice = (name, opts, sel) => '<fieldset class="sn-choices"><legend class="sn-label">' + esc(opts.legend) + '</legend>' + opts.items.map(([v, l]) => '<label class="sn-choice"><input type="radio" name="' + name + '" value="' + esc(v) + '"' + (v === sel ? ' checked' : '') + (opts.change ? ' data-change="' + opts.change + '"' : '') + '><span>' + esc(l) + '</span></label>').join('') + '</fieldset>';
-  const deptSelect = (id, sel) => '<select class="sn-select" id="' + id + '">' + M.DEPTS.map((d) => '<option value="' + esc(d) + '"' + (d === sel ? ' selected' : '') + '>' + esc((M.DEPT_ICONS[d] || '') + ' ' + d) + '</option>').join('') + '</select>';
+  const deptSelect = (id, sel) => '<select class="sn-select" id="' + id + '">' + M.DEPTS.map((d) => '<option value="' + esc(d) + '"' + (d === sel ? ' selected' : '') + '>' + esc(d) + '</option>').join('') + '</select>';
 
   function targetFields(me, now) {
     const sh = M.currentShift(now) || me.sh || 'Früh';
@@ -68,14 +68,14 @@
           + '<div class="sn-field"><label class="sn-label" for="po-title">Betreff</label><input class="sn-input" id="po-title" placeholder="z. B. Rückruf Babybrei – Regal räumen"></div>'
           + '<div class="sn-field"><label class="sn-label" for="po-body">Text</label><textarea class="sn-textarea" id="po-body" rows="3"></textarea></div>'
           + '<label class="sn-switch">Quittierung verlangen<input type="checkbox" role="switch" id="po-ack" checked></label>')
-        + '<label class="sn-check"><input type="checkbox" id="po-u">🔥 Dringend (Frist ' + M.settings().deadlines.postUrgent + ' statt ' + M.settings().deadlines.post + ' Min, dann eskaliert es an die Schichtleitung)</label>';
+        + '<label class="sn-check"><input type="checkbox" id="po-u"><span><span class="sn-inline">' + ui.urgent() + '</span> (Frist ' + M.settings().deadlines.postUrgent + ' statt ' + M.settings().deadlines.post + ' Min, dann eskaliert es an die Schichtleitung)</span></label>';
     }
     if (mode === 'task') {
       return '<div class="sn-field"><label class="sn-label" for="tk-title">Was ist zu tun?</label><textarea class="sn-textarea" id="tk-title" rows="2" placeholder="Ein Auftrag pro Zeile"></textarea></div>'
         + '<div class="sn-field"><label class="sn-label" for="tk-dept">Abteilung</label>' + deptSelect('tk-dept', M.deptOf(me, now)) + '</div>'
         + '<div class="sn-field"><label class="sn-label" for="tk-act">Tätigkeit (Dauer nach Richtwert)</label><select class="sn-select" id="tk-act">' + M.ACTS.map((a) => '<option value="' + esc(a.key) + '">' + esc(a.label) + '</option>').join('') + '</select></div>'
         + choice('tk-due', { legend: 'Frist', items: [['60', 'In 1 Stunde'], ['shift', 'Bis Schichtende'], ['tomorrow', 'Morgen']] }, 'shift')
-        + '<label class="sn-check"><input type="checkbox" id="tk-u">🔥 Dringend</label>'
+        + '<label class="sn-check"><input type="checkbox" id="tk-u"><span class="sn-inline">' + ui.urgent() + '</span></label>'
         + '<label class="sn-switch">Foto als Nachweis<input type="checkbox" role="switch" id="tk-proof"></label>'
         + '<label class="sn-switch">Eskalieren, wenn bis Frist nicht erledigt<input type="checkbox" role="switch" id="tk-esc" checked></label>'
         + '<p class="sn-muted sn-small">Wird automatisch verteilt: gleiche Abteilung und passende Tätigkeit zuerst, geringste Auslastung gewinnt, nie über das Limit.</p>';
@@ -90,8 +90,8 @@
 
   function openSend() {
     const me = SN.session.me(), now = SN.clock.now();
-    const modes = [['post', '📣 Anweisung'], ['task', '✅ Auftrag'], ['briefing', '☀️ Kurzbriefing'], ['kudos', '💛 Lob']];
-    ui.sheet('Senden', '<div class="sn-segment" role="tablist">' + modes.map(([k, l]) => '<button type="button" role="tab" class="sn-segment__tab" data-act="send-mode" data-k="' + k + '" aria-selected="' + (k === mode) + '">' + l + '</button>').join('') + '</div>'
+    const modes = [['post', 'Anweisung', 'report'], ['task', 'Auftrag', 'tasks'], ['briefing', 'Briefing', 'sun'], ['kudos', 'Lob', 'heart']];
+    ui.sheet('Senden', '<div class="sn-segment" role="tablist">' + modes.map(([k, l, ic]) => '<button type="button" role="tab" class="sn-segment__tab sn-segment__tab--icon" data-act="send-mode" data-k="' + k + '" aria-selected="' + (k === mode) + '">' + icon(ic) + '<span>' + l + '</span></button>').join('') + '</div>'
       + '<button type="button" class="sn-btn sn-btn--ghost sn-btn--block" data-act="call-sheet">' + icon('bell') + '<span>Schnellruf (Kasse öffnen, Besprechung …)</span></button>'
       + '<div id="send-form">' + form(me, now) + '</div>',
       '<button type="button" class="sn-btn sn-btn--primary sn-btn--lg sn-btn--block" data-act="send-go">' + icon('send') + '<span>Senden</span></button>');
@@ -135,6 +135,6 @@
       if (!text) return ui.toast('Bitte kurz schreiben, wofür.', 'warn');
       r = await C.kudos(me.id, ui.sheetVal('ku-to'), text);
     }
-    if (ui.result(r, mode === 'kudos' ? 'Lob gesendet 💛' : 'Gesendet – du siehst live, wer es gelesen und quittiert hat')) { ui.closeSheet(); ui.go('inbox', {}); ui.sub('inTab', 'sent'); }
+    if (ui.result(r, mode === 'kudos' ? 'Lob gesendet' : 'Gesendet – du siehst live, wer es gelesen und quittiert hat')) { ui.closeSheet(); ui.go('inbox', {}); ui.sub('inTab', 'sent'); }
   });
 })(window.SN = window.SN || {});

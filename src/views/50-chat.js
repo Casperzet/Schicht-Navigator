@@ -23,14 +23,14 @@
         + (!out && info.type !== 'dm' ? '<p class="sn-bubble__author">' + esc(M.name(m.by)) + '</p>' : '')
         + (m.text ? '<p class="sn-bubble__text">' + esc(m.text) + '</p>' : '')
         + (m.photo ? '<img alt="Foto" src="' + esc(m.photo) + '" style="max-width:100%;border-radius:8px">' : '')
-        + (tr[m.id] ? '<p class="sn-translation">🌐 ' + esc(tr[m.id]) + '</p>' : '')
+        + (tr[m.id] ? '<p class="sn-translation">' + icon('translate') + ' ' + esc(tr[m.id]) + '</p>' : '')
         + '<div class="sn-bubble__meta">' + U.fmt.time(m.at)
         + (out ? ' <span class="sn-receipt sn-receipt--' + C.receipt(tid, m) + '">' + (C.receipt(tid, m) === 'read' ? 'gelesen' : 'gesendet') + '</span>' : '')
         + (!out && canTr && m.text && !tr[m.id] ? ' <button type="button" class="sn-link" data-act="chat-tr" data-tid="' + esc(tid) + '" data-id="' + m.id + '">Übersetzen</button>' : '')
         + '</div></div>';
     }).join('');
     return '<div class="sn-row sn-row--between"><button type="button" class="sn-btn sn-btn--ghost" data-act="chat-back">' + icon('back') + '<span>Chats</span></button><h2 class="sn-section-title" style="margin:0">' + esc(C.threadTitle(tid, me.id)) + '</h2></div>'
-      + (info.type === 'dm' ? '<p class="sn-muted sn-small">🔒 Nur ihr beide seht diesen Chat.</p>' : info.type === 'lead' ? '<p class="sn-muted sn-small">Kanal für Schichtleitung und höher – Abstimmung ohne WhatsApp.</p>' : '')
+      + (info.type === 'dm' ? '<p class="sn-muted sn-small sn-inline">' + icon('lock', 'sn-icon--sm') + 'Nur ihr beide seht diesen Chat.</p>' : info.type === 'lead' ? '<p class="sn-muted sn-small">Kanal für Schichtleitung und höher – Abstimmung ohne WhatsApp.</p>' : '')
       + '<div class="sn-chat" id="chat-list">' + (body || P.empty('Noch keine Nachrichten', 'Schreib die erste oder tippe eine Schnellantwort.')) + '</div>'
       + '<div class="sn-chips">' + quick.map((q) => '<button type="button" class="sn-chip sn-chip--outline" data-act="chat-quick" data-x="' + esc(q) + '">' + esc(q) + '</button>').join('') + '</div>'
       + '<div class="sn-composer"><label class="sn-sr-only" for="chat-in">Nachricht</label><input class="sn-input" id="chat-in" autocomplete="off" placeholder="Nachricht" data-enter="chat-send" value="' + esc(draft || '') + '">'
@@ -45,8 +45,8 @@
       + '<button type="button" class="sn-btn sn-btn--secondary sn-btn--block" data-act="chat-new">' + icon('plus') + '<span>Neuer Chat mit Kolleg/in</span></button>'
       + P.sec('Chats', th.length) + '<ul class="sn-list">' + th.map((t) => {
         const last = C.messages(t.id).slice(-1)[0];
-        return '<li class="sn-list__item"><button type="button" class="sn-card sn-card--tap" data-act="chat-open" data-tid="' + esc(t.id) + '" style="width:100%;text-align:left;padding:12px"><span class="sn-list__body"><span class="sn-list__title">' + (t.type === 'lead' ? '🛡 ' : t.type === 'dept' ? '# ' : '') + esc(t.title) + (t.unread ? ' <span class="sn-badge">' + t.unread + '</span>' : '') + '</span>'
-          + '<span class="sn-list__sub">' + (last ? esc(M.first(last.by) + ': ' + (last.text || '📷 Foto')) + ' · ' + esc(U.fmt.ago(last.at)) : 'Noch keine Nachrichten') + '</span></span></button></li>';
+        return '<li class="sn-list__item"><button type="button" class="sn-card sn-card--tap" data-act="chat-open" data-tid="' + esc(t.id) + '" style="width:100%;text-align:left;padding:12px"><span class="sn-list__body"><span class="sn-list__title">' + (t.type === 'lead' ? icon('shield', 'sn-icon--sm') + ' ' : t.type === 'dept' ? icon('users', 'sn-icon--sm') + ' ' : '') + esc(t.title) + (t.unread ? ' <span class="sn-badge">' + t.unread + '</span>' : '') + '</span>'
+          + '<span class="sn-list__sub">' + (last ? esc(M.first(last.by) + ': ' + (last.text || 'Foto')) + ' · ' + esc(U.fmt.ago(last.at)) : 'Noch keine Nachrichten') + '</span></span></button></li>';
       }).join('') + '</ul>';
   }
 

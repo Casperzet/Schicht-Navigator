@@ -19,11 +19,12 @@
     'Alkoholische Getränke', 'Drogerie', 'Fertige Gerichte', 'Konserven', 'Obst und Gemüse',
     'Backshop und Frischetheke', 'Lager', 'Wareneinnahme', 'Leergut',
   ];
+  // Icon-NAMEN aus dem Sprite (src/ui/icons.svg), Darstellung über SN.ui.icon(name)
   const DEPT_ICONS = {
-    'Trocken sortiment': '🥫', 'Getränkeabteilung': '🥤', 'Kasse': '🛒', 'Info': 'ℹ️', 'MoPro': '🥛',
-    'Moon Food Abteilung': '🌙', 'Alkoholische Getränke': '🍷', 'Drogerie': '🧴', 'Fertige Gerichte': '🍲',
-    'Konserven': '🥫', 'Obst und Gemüse': '🍎', 'Backshop und Frischetheke': '🥐', 'Lager': '📦',
-    'Wareneinnahme': '🚚', 'Leergut': '♻️',
+    'Trocken sortiment': 'dept-trocken', 'Getränkeabteilung': 'dept-getraenke', 'Kasse': 'dept-kasse', 'Info': 'dept-info', 'MoPro': 'dept-mopro',
+    'Moon Food Abteilung': 'dept-moon', 'Alkoholische Getränke': 'dept-alkohol', 'Drogerie': 'dept-drogerie', 'Fertige Gerichte': 'dept-fertig',
+    'Konserven': 'dept-konserven', 'Obst und Gemüse': 'dept-obst', 'Backshop und Frischetheke': 'dept-backshop', 'Lager': 'dept-lager',
+    'Wareneinnahme': 'dept-wareneingang', 'Leergut': 'dept-leergut',
   };
   // Abteilungsgruppen (Zuständigkeit der Teamleitungen)
   const DEPT_GROUPS = {
@@ -97,40 +98,40 @@
     urgent: 3, absence: 5, defect: 5, call: 2, minor: 15, other: 20, post: 30, postUrgent: 10, sos: 2, handover: 15, photo: 20,
   };
   const DEADLINE_LABELS = {
-    urgent: '🔥 Meldung', absence: 'Personalausfall', defect: 'Defekt / Sicherheit', call: 'Kasse-/Info-Ruf',
-    minor: 'Lücke / Preis / Reinigung', other: 'Sonstiges', post: 'Anweisung mit Quittung', postUrgent: '🔥 Anweisung mit Quittung',
+    urgent: 'Dringende Meldung', absence: 'Personalausfall', defect: 'Defekt / Sicherheit', call: 'Kasse-/Info-Ruf',
+    minor: 'Lücke / Preis / Reinigung', other: 'Sonstiges', post: 'Anweisung mit Quittung', postUrgent: 'Dringende Anweisung mit Quittung',
     sos: 'SOS ohne Antwort', handover: 'Schichtübergabe', photo: 'Fotobericht ungesehen',
   };
 
   // Meldungs-Kategorien (M4). route = erste zuständige Stufe; dept = feste Abteilung
   const REPORT_CATS = [
-    { key: 'gap', label: 'Lücke im Regal', icon: '📦', route: 'sl', dl: 'minor' },
-    { key: 'price', label: 'Preis falsch', icon: '🏷️', route: 'tl', dl: 'minor' },
-    { key: 'clean', label: 'Reinigung nötig', icon: '🧹', route: 'clean', dl: 'minor' },
-    { key: 'defect', label: 'Defekt (Kühlung, Kasse, Technik)', icon: '🔧', route: 'admin', dl: 'defect' },
-    { key: 'bottle', label: 'Leergutautomat', icon: '♻️', route: 'sl', dl: 'minor', dept: 'Leergut' },
-    { key: 'absence', label: 'Personalausfall', icon: '🤒', route: 'sl', dl: 'absence' },
-    { key: 'delivery', label: 'Lieferung', icon: '🚚', route: 'sl', dl: 'other', dept: 'Wareneinnahme' },
-    { key: 'safety', label: 'Sicherheit', icon: '⚠️', route: 'sl', dl: 'defect' },
-    { key: 'other', label: 'Sonstiges', icon: '💬', route: 'sl', dl: 'other' },
+    { key: 'gap', label: 'Lücke im Regal', icon: 'box', route: 'sl', dl: 'minor' },
+    { key: 'price', label: 'Preis falsch', icon: 'tag', route: 'tl', dl: 'minor' },
+    { key: 'clean', label: 'Reinigung nötig', icon: 'broom', route: 'clean', dl: 'minor' },
+    { key: 'defect', label: 'Defekt (Kühlung, Kasse, Technik)', icon: 'wrench', route: 'admin', dl: 'defect' },
+    { key: 'bottle', label: 'Leergutautomat', icon: 'recycle', route: 'sl', dl: 'minor', dept: 'Leergut' },
+    { key: 'absence', label: 'Personalausfall', icon: 'thermometer', route: 'sl', dl: 'absence' },
+    { key: 'delivery', label: 'Lieferung', icon: 'truck', route: 'sl', dl: 'other', dept: 'Wareneinnahme' },
+    { key: 'safety', label: 'Sicherheit', icon: 'alert', route: 'sl', dl: 'defect' },
+    { key: 'other', label: 'Sonstiges', icon: 'chat', route: 'sl', dl: 'other' },
   ];
   const CAT = Object.fromEntries(REPORT_CATS.map((c) => [c.key, c]));
 
   // Schnellrufe (M5). need = nötige Zusagen (überschreibbar: settings.main.callNeed)
   const CALL_TYPES = [
-    { key: 'kasse', label: 'Kasse öffnen', icon: '🛒', need: 2, depts: ['Kasse', 'Info'], skill: 'kasse', dept: 'Kasse' },
-    { key: 'info', label: 'Hilfe an Info', icon: 'ℹ️', need: 1, depts: ['Info', 'Kasse'], dept: 'Info' },
-    { key: 'goods', label: 'Hilfe Wareneingang', icon: '🚚', need: 1, depts: ['Wareneinnahme', 'Lager', 'Leergut'], dept: 'Wareneinnahme' },
-    { key: 'meeting', label: 'Alle zur Besprechung', icon: '📣', need: 0, depts: null, dept: null },
+    { key: 'kasse', label: 'Kasse öffnen', icon: 'dept-kasse', need: 2, depts: ['Kasse', 'Info'], skill: 'kasse', dept: 'Kasse' },
+    { key: 'info', label: 'Hilfe an Info', icon: 'dept-info', need: 1, depts: ['Info', 'Kasse'], dept: 'Info' },
+    { key: 'goods', label: 'Hilfe Wareneingang', icon: 'truck', need: 1, depts: ['Wareneinnahme', 'Lager', 'Leergut'], dept: 'Wareneinnahme' },
+    { key: 'meeting', label: 'Alle zur Besprechung', icon: 'report', need: 0, depts: null, dept: null },
   ];
   const CALL = Object.fromEntries(CALL_TYPES.map((c) => [c.key, c]));
   // interner Ruf bei Ausfall (S2), nicht als Knopf
-  CALL.standin = { key: 'standin', label: 'Wer kann einspringen?', icon: '🙋', need: 1, depts: null, dept: null };
+  CALL.standin = { key: 'standin', label: 'Wer kann einspringen?', icon: 'hand', need: 1, depts: null, dept: null };
 
   const SOS_TYPES = [
-    { key: 'theft', label: 'Diebstahl', icon: '🚨', tel: '110' },
-    { key: 'fire', label: 'Brand', icon: '🔥', tel: '112' },
-    { key: 'accident', label: 'Unfall', icon: '🚑', tel: '112' },
+    { key: 'theft', label: 'Diebstahl', icon: 'sos', tel: '110' },
+    { key: 'fire', label: 'Brand', icon: 'flame', tel: '112' },
+    { key: 'accident', label: 'Unfall', icon: 'medical', tel: '112' },
   ];
   const EMERGENCY = [
     { tel: '112', label: 'Notruf 112 (Feuer, Rettung)' },
@@ -165,7 +166,7 @@
   /** Kanal „Leitung“: Schichtleitung und höher */
   const inLeadChannel = (e) => isLead(e);
   const groupOf = (dept) => Object.keys(DEPT_GROUPS).find((g) => DEPT_GROUPS[g].depts.includes(dept)) || null;
-  const deptLabel = (d) => (DEPT_ICONS[d] ? DEPT_ICONS[d] + ' ' : '') + d;
+  const deptLabel = (d) => d; // nur Text; Icon über SN.ui.icon(DEPT_ICONS[d])
 
   /* ---------- Zeit und Dienst ------------------------------------------- */
   /** Aktuelle Schicht nach Uhrzeit: Früh 06–14, Spät 14–22, sonst null */

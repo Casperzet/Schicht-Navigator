@@ -17,10 +17,10 @@
     const replies = (it.thread || []).filter((t) => t.type !== 'fwd');
     const fresh = C.isRecipient(it, me.id) && !(it.seen || {})[me.id];
     return '<article class="sn-card sn-photo-card' + (it.u ? ' sn-card--urgent' : '') + (fresh ? ' is-new' : '') + '" data-item="' + it.id + '">'
-      + (it.u ? '<div class="sn-card__flag">🔥 Dringend</div>' : '')
-      + (it.photosRemoved && !(it.photos || []).length ? '<p class="sn-photo-card__gone">🗑 ' + U.fmt.count(it.photosRemoved, 'Foto', 'Fotos') + ' nach Löschfrist entfernt (Datenschutz)</p>' : '')
+      + (it.u ? '<div class="sn-card__flag">' + ui.urgent() + '</div>' : '')
+      + (it.photosRemoved && !(it.photos || []).length ? '<p class="sn-photo-card__gone">' + icon('trash') + ' ' + U.fmt.count(it.photosRemoved, 'Foto', 'Fotos') + ' nach Löschfrist entfernt (Datenschutz)</p>' : '')
       + '<div class="sn-photo-card__media" data-act="ph-open" data-id="' + it.id + '">' + (it.photos || []).slice(0, 4).map((p, i) => '<img alt="Fotobericht ' + (i + 1) + '" loading="lazy" src="' + esc(p) + '">').join('') + (fresh ? '<span class="sn-photo-card__new">Neu</span>' : '') + '</div>'
-      + '<div class="sn-photo-card__body"><div class="sn-card__head"><h3 class="sn-card__title">' + esc(it.title) + '</h3>'
+      + '<div class="sn-photo-card__body"><div class="sn-card__head"><h3 class="sn-card__title">' + icon((O.PHOTO_CAT[it.cat] || {}).icon || 'camera', 'sn-icon--sm') + ' ' + esc(it.title) + '</h3>'
       + '<span class="sn-receipt sn-receipt--' + (replies.length ? 'ack' : seenBy.length ? 'read' : 'sent') + '">' + (replies.length ? 'beantwortet' : seenBy.length ? 'gesehen' : 'gesendet') + '</span></div>'
       + '<p class="sn-muted sn-small">' + esc((it.from === me.id ? 'Du' : M.name(it.from)) + ' · ' + (it.dept || '') + ' · ' + U.fmt.when(it.createdAt) + (it.from === me.id ? ' · an ' + M.labelFor(C.recipients(it)) : '')) + '</p>'
       + (it.body ? '<p class="sn-card__body">' + esc(it.body) + '</p>' : '')
@@ -35,15 +35,15 @@
     const to = M.labelFor(O.photoTargets('fl', now));
     let h = '<section class="sn-shoot">'
       + (shots.length
-        ? '<div class="sn-shoot__strip">' + shots.map((s, i) => '<figure><img alt="Aufnahme ' + (i + 1) + '" src="' + esc(s.url) + '"><button type="button" aria-label="Foto entfernen" data-act="ph-del" data-i="' + i + '">×</button></figure>').join('')
+        ? '<div class="sn-shoot__strip">' + shots.map((s, i) => '<figure><img alt="Aufnahme ' + (i + 1) + '" src="' + esc(s.url) + '"><button type="button" aria-label="Foto entfernen" data-act="ph-del" data-i="' + i + '">' + icon('x') + '</button></figure>').join('')
           + (shots.length < 4 ? '<label class="sn-shoot__more" for="ph-cam">' + icon('plus') + '<span>Noch ein Foto</span></label>' : '') + '</div>'
         : '<label class="sn-shoot__cam" for="ph-cam"><span class="sn-shoot__lens">' + icon('camera', 'sn-icon--lg') + '</span><b>Foto aufnehmen</b><small>Geht direkt an ' + esc(to) + '</small></label>')
       + '<input type="file" id="ph-cam" accept="image/*" capture="environment" hidden data-change="ph-shot">'
       + '</section>';
     if (shots.length) {
-      h += '<div class="sn-chips sn-chips--scroll" role="radiogroup" aria-label="Kategorie">' + O.PHOTO_CATS.map((c) => '<button type="button" role="radio" aria-checked="' + (c.key === cat) + '" class="sn-chip ' + (c.key === cat ? 'sn-chip--solid' : 'sn-chip--outline') + '" data-act="ph-cat" data-k="' + c.key + '">' + c.icon + ' ' + esc(c.label) + '</button>').join('') + '</div>'
+      h += '<div class="sn-chips sn-chips--scroll" role="radiogroup" aria-label="Kategorie">' + O.PHOTO_CATS.map((c) => '<button type="button" role="radio" aria-checked="' + (c.key === cat) + '" class="sn-chip ' + (c.key === cat ? 'sn-chip--solid' : 'sn-chip--outline') + '" data-act="ph-cat" data-k="' + c.key + '">' + icon(c.icon) + esc(c.label) + '</button>').join('') + '</div>'
         + '<div class="sn-field"><label class="sn-label" for="ph-text">Kurz dazu (optional)</label><input class="sn-input" id="ph-text" placeholder="z. B. Aktion Gang 7 steht, 2 Paletten offen"></div>'
-        + '<div class="sn-row" style="gap:8px"><label class="sn-check"><input type="checkbox" id="ph-u">🔥 Dringend</label><label class="sn-check"><input type="checkbox" id="ph-admin">auch Admin vom Dienst</label></div>'
+        + '<div class="sn-row" style="gap:8px"><label class="sn-check"><input type="checkbox" id="ph-u"><span class="sn-inline">' + ui.urgent() + '</span></label><label class="sn-check"><input type="checkbox" id="ph-admin">auch Admin vom Dienst</label></div>'
         + '<button type="button" class="sn-btn sn-btn--primary sn-btn--lg sn-btn--block" data-act="ph-send" id="ph-send">' + icon('send') + '<span>An ' + esc(to) + ' senden</span></button>';
     }
     h += '<div class="sn-row sn-row--between"><h2 class="sn-section-title">Heute gemeldet</h2><span class="sn-chip sn-chip--outline">' + today.length + ' Fotoberichte</span></div>'

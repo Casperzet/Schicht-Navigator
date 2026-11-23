@@ -4,7 +4,7 @@
    ========================================================================== */
 (function (SN) {
   'use strict';
-  const U = SN.util, M = SN.model, O = SN.ops, ui = SN.ui, P = SN.parts, esc = U.esc;
+  const U = SN.util, M = SN.model, O = SN.ops, ui = SN.ui, P = SN.parts, esc = U.esc, icon = ui.icon;
   let rows = [];
 
   function preview() {
@@ -12,7 +12,7 @@
     const found = rows.filter((r) => r.state === 'found').length;
     return '<p>' + found + ' von ' + rows.length + ' Namen sicher zugeordnet. Nicht gefundene bitte zuordnen oder abwählen.</p>'
       + '<table class="sn-roster"><tbody>' + rows.map((r, i) => '<tr><td><label class="sn-check"><input type="checkbox" id="ro-on-' + i + '"' + (r.state === 'found' ? ' checked' : '') + '></label></td>'
-        + '<td><b class="' + (r.state === 'found' ? '' : 'is-miss') + '">' + esc(r.name) + '</b><br><small>' + (r.state === 'found' ? '✓ gefunden' : r.state === 'ambiguous' ? '⚠ mehrdeutig' : '✗ nicht gefunden') + ' · '
+        + '<td><b class="' + (r.state === 'found' ? '' : 'is-miss') + '">' + esc(r.name) + '</b><br><small>' + (r.state === 'found' ? icon('check-circle', 'sn-icon--xs') + ' gefunden' : r.state === 'ambiguous' ? icon('alert', 'sn-icon--xs') + ' mehrdeutig' : icon('x-circle', 'sn-icon--xs') + ' nicht gefunden') + ' · '
         + esc((r.days || []).filter((d) => !d.off).map((d) => d.d + ' ' + d.s + '–' + d.e).join(', ') || 'frei') + '</small>'
         + '<select class="sn-select" id="ro-id-' + i + '" aria-label="Zuordnung für ' + esc(r.name) + '"><option value="">– Person wählen –</option>'
         + (r.candidates.length ? r.candidates : people.map((e) => e.id)).map((id) => '<option value="' + id + '"' + (id === r.id ? ' selected' : '') + '>' + esc(M.name(id)) + '</option>').join('')

@@ -15,7 +15,7 @@
     const ti = (new Date(now).getDay() + 6) % 7;
     return '<div class="sn-week">' + days.map((x, i) => {
       const s = U.fmt.hm(x.s) / 60, e = U.fmt.hm(x.e) / 60;
-      return '<div class="' + (i === ti ? 'is-today' : '') + '"><b>' + esc(x.d) + '</b>' + (x.off ? '<span class="sn-muted sn-small">frei</span>' : '<span class="sn-track"><i style="left:' + ((s - 5) / 18 * 100) + '%;width:' + ((e - s) / 18 * 100) + '%">' + esc(x.s + '–' + x.e) + ' · ☕' + (x.p == null ? '' : x.p) + '</i></span>') + '</div>';
+      return '<div class="' + (i === ti ? 'is-today' : '') + '"><b>' + esc(x.d) + '</b>' + (x.off ? '<span class="sn-muted sn-small">frei</span>' : '<span class="sn-track"><i style="left:' + ((s - 5) / 18 * 100) + '%;width:' + ((e - s) / 18 * 100) + '%">' + esc(x.s + '–' + x.e) + ' ' + icon('coffee') + (x.p == null ? '' : x.p) + '</i></span>') + '</div>';
     }).join('') + '</div>';
   }
   function planEditor(days) {
@@ -57,7 +57,7 @@
     const w = M.shiftWindow(me, now);
     const key = 'mood.' + me.id + '.' + U.fmt.dayKey(now);
     if (w && now > w.e - 90 * U.MIN && !U.ls.get(key, false)) {
-      h += P.sec('Wie war deine Schicht?') + '<div class="sn-mood">' + ['😀', '🙂', '😐', '🙁'].map((m, i) => '<button type="button" data-act="mood" data-v="' + (i + 1) + '" aria-label="' + ['Sehr gut', 'Gut', 'Geht so', 'Schlecht'][i] + '">' + m + '</button>').join('') + '</div><p class="sn-muted sn-small">Anonym. Die Filialleitung sieht nur die Summe der Schicht, ab 5 Antworten.</p>';
+      h += P.sec('Wie war deine Schicht?') + '<div class="sn-mood">' + ['Sehr gut', 'Gut', 'Geht so', 'Schlecht'].map((m, i) => '<button type="button" data-act="mood" data-v="' + (i + 1) + '">' + icon('mood-' + (i + 1), 'sn-icon--xl') + '<span>' + m + '</span></button>').join('') + '</div><p class="sn-muted sn-small">Anonym. Die Filialleitung sieht nur die Summe der Schicht, ab 5 Antworten.</p>';
     }
     h += P.sec('Darstellung') + '<div class="sn-row" style="gap:8px">' + ['auto', 'light', 'dark'].map((t) => P.btn(t === 'auto' ? 'Automatisch' : t === 'light' ? 'Hell' : 'Dunkel', 'theme', { t }, U.ls.get('theme', 'auto') === t ? 'primary' : 'ghost')).join('') + '</div>';
     h += '<button type="button" class="sn-btn sn-btn--danger sn-btn--block" style="margin-top:20px" data-act="logout">Abmelden</button>';

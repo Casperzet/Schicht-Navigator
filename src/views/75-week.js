@@ -23,7 +23,7 @@
       return '<button type="button" role="tab" aria-selected="' + (l.day.key === selKey) + '" class="sn-wday sn-wday--' + lvl + (l.day.key === todayKey ? ' is-today' : '') + '" data-act="wk-day" data-k="' + l.day.key + '">'
         + '<span class="sn-wday__d">' + esc(l.day.label) + '</span><span class="sn-wday__n">' + new Date(l.day.date).getDate() + '.</span>'
         + '<span class="sn-wday__bar" aria-hidden="true"><i style="height:' + Math.max(4, pct / 1.3) + '%"></i></span>'
-        + '<span class="sn-wday__p">' + (l.need ? hrs(l.need) : '–') + '</span><span class="sn-wday__s">' + l.staff.length + ' 👤</span></button>';
+        + '<span class="sn-wday__p">' + (l.need ? hrs(l.need) : '–') + '</span><span class="sn-wday__s">' + icon('user', 'sn-icon--xs') + l.staff.length + '</span></button>';
     }).join('') + '</div>';
 
     const f = L.forecast || {};
@@ -47,7 +47,7 @@
         const used = mine.reduce((a, it) => a + (it.min || 0), 0), lim = SN.dist.limitOf(e);
         return '<div class="sn-tl-row' + (e.id === me.id ? ' is-me' : '') + '"><div class="sn-tl-name"><b>' + esc(e.name.split(' ')[0]) + ' ' + esc((e.name.split(' ')[1] || '').slice(0, 1)) + '.</b><small>' + esc(e.dept || '') + '</small></div>'
           + '<div class="sn-tl-track"><span class="sn-tl-shift sn-tl-shift--' + (e.sh === 'Spät' ? 'late' : 'early') + '" style="left:' + pos(s.s) + ';width:calc(' + pos(s.e) + ' - ' + pos(s.s) + ')"><i style="width:' + Math.min(100, lim ? used / lim * 100 : 0) + '%"></i></span></div>'
-          + (mine.length ? '<div class="sn-tl-tasks">' + mine.map((it) => '<span class="sn-chip sn-chip--outline">' + esc(it.title.replace(/^Warenverräumung (\(KKP-Ware\) )?– /, '📦 ')) + ' · ' + it.min + '′</span>').join('') + '</div>' : '')
+          + (mine.length ? '<div class="sn-tl-tasks">' + mine.map((it) => '<span class="sn-chip sn-chip--outline">' + esc(it.title.replace(/^Warenverräumung (\(KKP-Ware\) )?– /, '')) + ' · ' + it.min + '′</span>').join('') + '</div>' : '')
           + '</div>';
       }).join('') + (staff.length ? '' : P.empty('Niemand eingeplant')) + '<p class="sn-muted sn-small">Balken = Schicht · dunkle Füllung = verplante Zeit bis zum Limit (80 % der Arbeitszeit).</p></section>';
     return h;
@@ -58,7 +58,7 @@
   ui.on('wk-fc', (el) => {
     const f = O.forecast(el.dataset.k) || { kkp: 8, pal: 3, box: 6, avg: 4 };
     const n = (id, l, v) => '<div class="sn-field"><label class="sn-label" for="' + id + '">' + l + '</label><input class="sn-input" type="number" min="0" max="80" id="' + id + '" value="' + v + '" inputmode="numeric"></div>';
-    ui.sheet('Erwartete Lieferung', '<div class="sn-filter">' + n('fc-kkp', '🛒 KKP', f.kkp || 0) + n('fc-pal', '🟫 Paletten', f.pal || 0) + n('fc-box', '📥 Boxen', f.box || 0) + '</div>' + n('fc-avg', 'Ø Abteilungen je KKP', f.avg || 4),
+    ui.sheet('Erwartete Lieferung', '<div class="sn-filter">' + n('fc-kkp', icon('cart', 'sn-icon--sm') + ' KKP', f.kkp || 0) + n('fc-pal', icon('pallet', 'sn-icon--sm') + ' Paletten', f.pal || 0) + n('fc-box', icon('box', 'sn-icon--sm') + ' Boxen', f.box || 0) + '</div>' + n('fc-avg', 'Ø Abteilungen je KKP', f.avg || 4),
       P.btn('Speichern', 'wk-fc-save', { k: el.dataset.k }, 'primary', 'check'));
   });
   ui.on('wk-fc-save', async (el) => {

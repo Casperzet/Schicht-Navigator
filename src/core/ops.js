@@ -20,13 +20,13 @@
 
   /* ---------- Fotobericht ------------------------------------------------ */
   const PHOTO_CATS = [
-    { key: 'order', label: 'Regal / Ordnung', icon: '🧺' },
-    { key: 'goods', label: 'Ware / Lieferung', icon: '📦' },
-    { key: 'promo', label: 'Aktion / Werbung', icon: '🏷️' },
-    { key: 'clean', label: 'Sauberkeit', icon: '🧽' },
-    { key: 'defect', label: 'Defekt', icon: '🔧' },
-    { key: 'staff', label: 'Personal', icon: '👥' },
-    { key: 'other', label: 'Sonstiges', icon: '📷' },
+    { key: 'order', label: 'Regal / Ordnung', icon: 'layers' },
+    { key: 'goods', label: 'Ware / Lieferung', icon: 'box' },
+    { key: 'promo', label: 'Aktion / Werbung', icon: 'tag' },
+    { key: 'clean', label: 'Sauberkeit', icon: 'spray' },
+    { key: 'defect', label: 'Defekt', icon: 'wrench' },
+    { key: 'staff', label: 'Personal', icon: 'users' },
+    { key: 'other', label: 'Sonstiges', icon: 'camera' },
   ];
   const PHOTO_CAT = Object.fromEntries(PHOTO_CATS.map((c) => [c.key, c]));
   /** Empfänger: Filialleitung im Dienst, sonst alle; optional Admin vom Dienst */
@@ -43,16 +43,16 @@
     const c = PHOTO_CAT[opts.cat] || PHOTO_CAT.other;
     const ids = photoTargets(opts.to, now).filter((id) => id !== by);
     if (!opts.photos || !opts.photos.length) return Promise.resolve({ ok: false, reason: 'Bitte mindestens ein Foto aufnehmen.' });
-    return SN.comm.send({ kind: 'photo', cat: c.key, title: c.icon + ' ' + c.label, body: opts.body || '', orig: opts.orig, photos: opts.photos.slice(0, 4), dept: opts.dept, u: !!opts.u, to: { type: 'person', ids: ids.length ? ids : [M.adminOnDuty(now)] } }, by, now);
+    return SN.comm.send({ kind: 'photo', cat: c.key, title: c.label, body: opts.body || '', orig: opts.orig, photos: opts.photos.slice(0, 4), dept: opts.dept, u: !!opts.u, to: { type: 'person', ids: ids.length ? ids : [M.adminOnDuty(now)] } }, by, now);
   }
   /** Schnellantworten der Filialleitung */
-  const PHOTO_REPLIES = ['👍 Passt so', 'Bitte nachbessern', 'Danke, gut gemacht', 'Ruf mich kurz an'];
+  const PHOTO_REPLIES = ['Passt so', 'Bitte nachbessern', 'Danke, gut gemacht', 'Ruf mich kurz an'];
 
   /* ---------- Lieferung --------------------------------------------------- */
   const UNIT = {
-    kkp: { label: 'KKP', long: 'KKP (Kaufland Klapp Pallets)', icon: '🛒' },
-    pal: { label: 'Palette', long: 'Paletten', icon: '🟫' },
-    box: { label: 'Box', long: 'Boxen (graue Kisten)', icon: '📥' },
+    kkp: { label: 'KKP', long: 'KKP (Kaufland Klapp Pallets)', icon: 'cart' },
+    pal: { label: 'Palette', long: 'Paletten', icon: 'pallet' },
+    box: { label: 'Box', long: 'Boxen (graue Kisten)', icon: 'box' },
   };
   function effortCfg() {
     const g = (M.settings().goods) || {};
@@ -99,7 +99,7 @@
     for (let i = 0; i < (c.box || 0); i++) out.push({ type: 'box', depts: take(1) });
     return out;
   }
-  const unitLabel = (u) => UNIT[u.type].icon + ' ' + UNIT[u.type].label + (u.no ? ' ' + u.no : '');
+  const unitLabel = (u) => UNIT[u.type].label + (u.no ? ' ' + u.no : '');
   /** Lieferung anlegen: LKW-Dokument + ein Auftrag je Tour mit Laufweg-Checkliste, dann verteilen */
   async function createDelivery(by, title, units, opts, now) {
     now = now0(now); opts = opts || {};
@@ -114,7 +114,7 @@
       const round = p.rounds[r];
       const what = ['kkp', 'pal', 'box'].map((t) => { const n = round.units.filter((u) => u.type === t).length; return n ? n + ' ' + (t === 'pal' ? (n === 1 ? 'Palette' : 'Paletten') : t === 'kkp' ? 'KKP' : (n === 1 ? 'Box' : 'Boxen')) : ''; }).filter(Boolean).join(', ');
       // Checkliste = Laufweg: je Abteilung, welche Einheiten dorthin gehören
-      const checklist = round.depts.map((d) => ({ text: (M.DEPT_ICONS[d] || '') + ' ' + d + ' – ' + round.units.filter((u) => (u.depts || []).includes(d)).map(unitLabel).join(', '), done: false }));
+      const checklist = round.depts.map((d) => ({ text: d + ' – ' + round.units.filter((u) => (u.depts || []).includes(d)).map(unitLabel).join(', '), done: false }));
       const res = await SN.comm.task(by, {
         title: (title || 'Lieferung') + ': Tour ' + (r + 1) + ' · ' + what, dept: 'Wareneinnahme', act: 'Warenverräumung', min: round.min,
         due, u: !!opts.u, escalate: true, checklist, truckId: id, route: round.depts,

@@ -34,8 +34,8 @@
       const v = byId('view');
       v.innerHTML = '<h2 class="sn-section-title">Wie möchtest du starten?</h2>'
         + '<div class="sn-boot-choice">'
-        + '<button type="button" data-mode="db"' + (last === 'db' ? ' autofocus' : '') + '><strong>🏪 Filialbetrieb</strong><span>Gemeinsame Live-Daten für alle mit Zugriff</span></button>'
-        + '<button type="button" data-mode="demo"' + (last === 'demo' ? ' autofocus' : '') + '><strong>🧪 Demo</strong><span>Ausprobieren mit Beispieldaten, nichts wird gespeichert</span></button>'
+        + '<button type="button" data-mode="db"' + (last === 'db' ? ' autofocus' : '') + '><strong class="sn-inline"><svg class="sn-icon" aria-hidden="true"><use href="#i-users"/></svg>Filialbetrieb</strong><span>Gemeinsame Live-Daten für alle mit Zugriff</span></button>'
+        + '<button type="button" data-mode="demo"' + (last === 'demo' ? ' autofocus' : '') + '><strong class="sn-inline"><svg class="sn-icon" aria-hidden="true"><use href="#i-sparkle"/></svg>Demo</strong><span>Ausprobieren mit Beispieldaten, nichts wird gespeichert</span></button>'
         + '</div>';
       v.addEventListener('click', function onClick(ev) {
         const b = ev.target.closest('[data-mode]');

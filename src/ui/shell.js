@@ -16,9 +16,15 @@
   const views = {};
   const acts = {};
   const changes = {};
-  const st = { tab: null, params: {}, sub: {}, dirty: false, lastChatSeen: {}, notified: {}, started: false };
+  const st = { tab: null, params: {}, sub: {}, dirty: false, lastChatSeen: {}, notified: {}, started: false, navIdx: null, seg: {} };
 
   function icon(name, cls) { return '<svg class="sn-icon' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#i-' + name + '"/></svg>'; }
+  /** Dringend = Flammen-Icon + Wort (nie nur Symbol) */
+  function urgent(text) { return icon('flame-fill') + '<span>' + esc(text || 'Dringend') + '</span>'; }
+  /** Abteilung mit eigenem Icon */
+  function dept(d) { return icon(M.DEPT_ICONS[d] || 'pin') + '<span>' + esc(d) + '</span>'; }
+  /** Gefüllte Variante für „aktiv“, falls im Sprite vorhanden */
+  function iconActive(name) { return document.getElementById('i-' + name + '-fill') ? icon(name + '-fill') : icon(name); }
 
   /* ---------- Registrierung ------------------------------------------------ */
   function registerView(tab, def) { views[tab] = Object.assign({ order: 50, groups: [] }, def, { tab }); }
@@ -30,6 +36,52 @@
     return Object.values(views)
       .filter((v) => v.label && v.groups.includes(g) && (!v.show || v.show(me)))
       .sort((a, b) => a.order - b.order);
+  }
+
+  /* ---------- Bewegung (nie blockierend; aus bei prefers-reduced-motion) ---------- */
+  const reduced = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+  let enterTimer = 0;
+  /** Ansichtswechsel: Einblenden + gestaffelte Liste (Klasse wird nach der Animation wieder entfernt) */
+  function enter(v) {
+    if (reduced()) return;
+    clearTimeout(enterTimer);
+    v.classList.remove('is-enter'); void v.offsetWidth; v.classList.add('is-enter');
+    enterTimer = setTimeout(() => v.classList.remove('is-enter'), 600);
+    countUp(v);
+  }
+  /** Ganze Zahlen kurz hochzählen (nur reine Zahlen bzw. „a/b“; Endwert steht schon im Text) */
+  function countUp(root) {
+    root.querySelectorAll('[data-count], .sn-ring__value, .sn-stat__value, .sn-schema__cell > b').forEach((el) => {
+      const m = /^(\d{1,5})(\/\d+)?$/.exec(el.textContent.trim());
+      if (!m) return;
+      const to = +m[1], tail = m[2] || '';
+      if (to < 2) return;
+      const t0 = performance.now(), dur = 600;
+      const tick = (t) => {
+        if (!el.isConnected) return;
+        const k = Math.min(1, (t - t0) / dur);
+        el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))) + tail;
+        if (k < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  }
+  /** Gleitender Indikator: neues Element startet an der alten Position und gleitet zur neuen */
+  function glide(el, idx, prev) {
+    el.style.setProperty('--i', String(prev == null || reduced() ? idx : prev));
+    if (prev != null && prev !== idx && !reduced()) { void el.offsetWidth; requestAnimationFrame(() => el.style.setProperty('--i', String(idx))); }
+  }
+  function segments(root) {
+    root.querySelectorAll('.sn-segment, .sn-segmented').forEach((sg) => {
+      const tabs = Array.from(sg.children).filter((c) => /sn-segment(ed)?__(tab|item)/.test(c.className));
+      const i = tabs.findIndex((t) => t.getAttribute('aria-selected') === 'true' || t.getAttribute('aria-pressed') === 'true');
+      if (i < 0 || !tabs.length) return;
+      const key = (tabs[0].dataset.act || '') + tabs.length;
+      sg.style.setProperty('--n', String(tabs.length));
+      sg.classList.add('has-glider');
+      glide(sg, i, st.seg[key]);
+      st.seg[key] = i;
+    });
   }
 
   /* ---------- Navigation ---------------------------------------------------- */
@@ -63,13 +115,18 @@
     const el = byId('nav');
     if (!me) { el.innerHTML = ''; el.hidden = true; return; }
     el.hidden = false;
-    el.innerHTML = navFor(me).map((v) => {
+    const items = navFor(me);
+    const cur = items.findIndex((v) => v.tab === st.tab);
+    el.style.setProperty('--n', String(items.length));
+    el.innerHTML = '<span class="sn-nav__glider" aria-hidden="true"></span>' + items.map((v) => {
       const b = v.badge ? v.badge(me) : 0;
       const n = typeof b === 'object' ? b.n : b, urg = typeof b === 'object' && b.urgent;
       return '<button type="button" class="sn-nav__item" data-go="' + v.tab + '"' + (st.tab === v.tab ? ' aria-current="page"' : '') + '>'
-        + '<span class="sn-nav__icon">' + icon(v.icon || 'home') + (n ? '<span class="sn-badge' + (urg ? ' sn-badge--urgent' : '') + '">' + (n > 99 ? '99+' : n) + '</span>' : '') + '</span>'
+        + '<span class="sn-nav__icon">' + (st.tab === v.tab ? iconActive(v.icon || 'home') : icon(v.icon || 'home')) + (n ? '<span class="sn-badge' + (urg ? ' sn-badge--urgent' : '') + '">' + (n > 99 ? '99+' : n) + '</span>' : '') + '</span>'
         + esc(v.label) + '</button>';
     }).join('');
+    if (cur < 0) el.firstChild.classList.add('is-none');
+    else { glide(el.firstChild, cur, st.navIdx); st.navIdx = cur; }
   }
 
   function fab(me, view) {
@@ -99,8 +156,8 @@
         + '</div></div>');
     }
     for (const it of C.openCalls(me.id)) {
-      out.push('<div class="sn-alert sn-alert--warn" role="alert"><span class="sn-alert__icon">' + icon('bell') + '</span>'
-        + '<p class="sn-alert__title">' + esc((M.CALL[it.type] || {}).icon || '📣') + ' ' + esc(it.title) + '</p>'
+      out.push('<div class="sn-alert sn-alert--warn" role="alert"><span class="sn-alert__icon">' + icon((M.CALL[it.type] || {}).icon || 'bell') + '</span>'
+        + '<p class="sn-alert__title">' + esc(it.title) + '</p>'
         + '<p class="sn-alert__text">' + esc(M.name(it.from)) + ' · ' + esc(U.fmt.ago(it.createdAt)) + (it.body ? ' · ' + esc(it.body) : '') + '</p>'
         + '<div class="sn-alert__actions"><button class="sn-btn sn-btn--primary" data-act="call-yes" data-id="' + it.id + '">' + icon('run') + 'Ich komme</button>'
         + '<button class="sn-btn sn-btn--secondary" data-act="call-no" data-id="' + it.id + '">Kann nicht</button></div></div>');
@@ -120,7 +177,7 @@
       const t = C.threadsFor(me.id).find((x) => x.unread && (C.messages(x.id).slice(-1)[0] || {}).by !== me.id);
       const lm = t ? C.messages(t.id).slice(-1)[0] : null;
       if (t && lm) {
-        t.preview = M.first(lm.by) + ': ' + (lm.text || '📷 Foto');
+        t.preview = M.first(lm.by) + ': ' + (lm.text || 'Foto');
         out.push('<button type="button" class="sn-alert sn-alert--info sn-alert--tap" data-act="chat-open" data-tid="' + esc(t.id) + '"><span class="sn-alert__icon">' + icon('chat') + '</span>'
           + '<p class="sn-alert__title">Neue Nachricht · ' + esc(t.title) + '</p><p class="sn-alert__text">' + esc(t.preview || 'Antippen zum Lesen') + '</p></button>');
       }
@@ -153,7 +210,7 @@
     const v = byId('view');
     header(me, now);
     byId('sos').hidden = !me;
-    if (!me) { nav(null); fab(null); byId('banners').innerHTML = ''; v.innerHTML = loginView(); return; }
+    if (!me) { nav(null); fab(null); byId('banners').innerHTML = ''; v.innerHTML = loginView(); if (!keep) enter(v); return; }
     const list = navFor(me);
     // Zugriff: Gruppe passt (auch ohne eigenen Platz in der Navigation)
     const cur = views[st.tab];
@@ -171,11 +228,14 @@
       html = '<div class="sn-alert sn-alert--warn sn-alert--card" role="alert"><p class="sn-alert__title">Diese Ansicht hat einen Fehler.</p><p class="sn-alert__text">Bitte einen anderen Bereich wählen.</p></div>';
     }
     v.innerHTML = html;
+    segments(v);
     if (keep) {
+      v.classList.remove('is-enter');
       restoreInputs(v, snap);
       v.scrollTop = top;
       if (active) { const a = byId(active); if (a) a.focus({ preventScroll: true }); }
     }
+    if (!keep) enter(v);
     if (view && view.mount) try { view.mount(v, { me, now }); } catch (e) { console.error(e); }
   }
   /** Rendern nach Datenänderung: gebündelt; während jemand tippt, erst nach Verlassen des Feldes */
@@ -192,12 +252,12 @@
   }
 
   /* ---------- Toast, Sheet --------------------------------------------------- */
-  function toast(text, kind) {
+  function toast(text, kind, ic) {
     const r = byId('toast');
     const el = document.createElement('div');
     el.className = 'sn-toast sn-toast--' + (kind || 'ok');
     el.setAttribute('role', 'status');
-    el.innerHTML = '<span class="sn-toast__icon">' + icon(kind === 'warn' ? 'x' : 'check') + '</span><span class="sn-toast__text">' + esc(text) + '</span>';
+    el.innerHTML = '<span class="sn-toast__icon">' + icon(ic || (kind === 'warn' ? 'alert' : 'check')) + '</span><span class="sn-toast__text">' + esc(text) + '</span>';
     r.appendChild(el);
     U.vibrate(12);
     setTimeout(() => { el.classList.add('is-leaving'); setTimeout(() => el.remove(), 300); }, kind === 'warn' ? 4500 : 2800);
@@ -240,7 +300,7 @@
     const demo = SN.store.mode === 'demo';
     const quick = demo ? [['emp', 'Anna Müller'], ['lead', 'Julia Becker'], ['admin', 'Mustafa'], ['admin', 'Sabine Krämer']]
       .map(([g, n]) => staff.find((e) => e.name === n)).filter(Boolean) : [];
-    return '<section class="sn-login">'
+    return '<section class="sn-login sn-glass">'
       + '<h2 class="sn-section-title">Anmelden</h2>'
       + '<p class="sn-muted">Jede Person hat ein eigenes Konto. ' + (demo ? 'Demo: PIN 1234 für alle.' : 'PIN von der Filialleitung.') + '</p>'
       + '<div class="sn-field"><label class="sn-label" for="lg-u">Konto</label><select class="sn-select" id="lg-u">'
@@ -253,7 +313,7 @@
       + '</section>';
   }
   function setupView() {
-    return '<section class="sn-login"><h2 class="sn-section-title">Filialbetrieb einrichten</h2>'
+    return '<section class="sn-login sn-glass"><h2 class="sn-section-title">Filialbetrieb einrichten</h2>'
       + '<p>Die gemeinsame Datenbank ist noch leer. Lege das erste Admin-Konto an. Weitere Mitarbeitende fügst du danach unter „Mehr → Team“ hinzu.</p>'
       + '<div class="sn-field"><label class="sn-label" for="su-n">Dein Name</label><input class="sn-input" id="su-n" autocomplete="name"></div>'
       + '<div class="sn-field"><label class="sn-label" for="su-r">Rolle</label><select class="sn-select" id="su-r"><option value="admin">Admin (Disponent)</option><option value="fl">Filialleiter/in</option><option value="sfl">Stellv. Filialleiter/in</option></select></div>'
@@ -300,8 +360,8 @@
     try {
       const ps = SN.dist.pauseStatus(me, now);
       const key = 'p-' + me.id + '-' + U.fmt.dayKey(now);
-      if (ps.state === 'due' && !st.notified[key]) { st.notified[key] = 1; toast('☕ Seit 5,5 Std im Dienst: Bitte jetzt Pause nehmen.', 'warn'); }
-      if (ps.state === 'over' && !st.notified[key + 'o']) { st.notified[key + 'o'] = 1; toast('☕ Deine Pause ist abgelaufen.', 'warn'); }
+      if (ps.state === 'due' && !st.notified[key]) { st.notified[key] = 1; toast('Seit 5,5 Std im Dienst: Bitte jetzt Pause nehmen.', 'warn', 'coffee'); }
+      if (ps.state === 'over' && !st.notified[key + 'o']) { st.notified[key + 'o'] = 1; toast('Deine Pause ist abgelaufen.', 'warn', 'coffee'); }
     } catch (e) { /* ohne Plan egal */ }
     // Vorlagen des Tages legt der Admin vom Dienst an
     if (M.isAdmin(me) && M.adminOnDuty(now) === me.id) {
@@ -345,7 +405,7 @@
   }
 
   SN.ui = {
-    registerView, on, onChange, go, render, requestRender, sub, toast, result, sheet, closeSheet, sheetVal, icon,
+    registerView, on, onChange, go, render, requestRender, sub, toast, result, sheet, closeSheet, sheetVal, icon, urgent, dept, iconActive,
     get tab() { return st.tab; }, get params() { return st.params; }, views, start, tick,
   };
 })(window.SN = window.SN || {});
