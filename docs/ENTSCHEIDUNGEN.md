@@ -79,3 +79,44 @@ Leitfrage bei jeder Entscheidung: **Wird die Kommunikation zwischen Leitung und 
 3. **Eskalationsfristen** mit Schichtleitungen durchgehen (Einstellungen → Fristen).
 4. **Server:** Render-Dienst anlegen (Plan Starter) oder Alternative wählen.
 5. **Betriebsrat und Datenschutz** vor dem Echtbetrieb einbinden (Löschfrist, Zugänge, Fotos). Keine Rechtsberatung.
+
+---
+
+# Erweiterung 2026-11-23: Steuerpult, Übersicht, Design, Kaufland-Prozesse
+
+Ausführliche Tabellen mit Optionen, Begründung und Tests: `docs/entscheidungen-steuerpult.md` (Schichtleitung), `docs/entscheidungen-uebersicht.md` (Filialleitung). Hintergrund: `docs/kaufland-prozesse.md` (Recherche, 37 Quellen, belegt/Annahme je Zeile).
+
+## 8. Rollen-Oberflächen
+
+| Rolle | Möglichkeiten | Entscheidung | Begründung | Geprüft durch |
+|---|---|---|---|---|
+| Schichtleitung | gleiche Ansicht wie Mitarbeitende · eigenes Steuerpult | **Steuerpult** statt „Start“: Ampel je Prozessbereich aus echten Daten, „Als Nächstes“ (max. 3), Meldung nach oben in 2 Taps, Rundgänge, Team | Soll die Schicht steuern, ohne von der Fläche weggezogen zu werden | `lead.test.js`, `flows-lead.js` |
+| Ruhiger Modus | alles melden · nur Kritisches | **Ruhig bis Schichtende**: nur SOS, Eskalation an mich und Rufe unterbrechen; Rest sammelt sich im Steuerpult | Konzentration auf der Fläche; nichts geht verloren | `flows-lead.js` |
+| Filialleitung | Einzel-Ansichten · Sammelübersicht | **Übersicht** mit Reitern Meldungen (Kennzahlen als Filter, Stundenverlauf) und Anwesenheit (im Dienst, frei, Pause, abwesend, Soll/Ist je Abteilung) | Ein Blick statt fünf Listen | `overview.test.js`, `flows-overview.js` |
+| Personalpflege | Formular in „Mehr“ · eigene Ansicht | **Eigene Ansicht „Personal“**: anlegen, ändern, entfernen, PIN (Hash), Abwesenheit (ohne Diagnose), Umsetzen, Wochenplan, Protokoll | Filialleitung soll Personal selbst pflegen | `flows-overview.js` |
+| Rechte bei Personal | alle dürfen alles · Rangprüfung | **Nur gleich- oder höherrangig bearbeiten**, nicht über eigener Stufe vergeben | Admin darf per PIN-Reset nicht als Filialleitung auftreten | `overview.test.js` |
+| Abwesenheitsgrund | für alle sichtbar · nur Berechtigte | **Nur Admin-Gruppe in der Oberfläche**; Grenze: steht im Personaldokument (echte Trennung braucht Server-Rollenrechte) | Betriebsrat-Regel; offene Grenze ehrlich benannt | – |
+
+## 9. Design
+
+| Thema | Möglichkeiten | Entscheidung | Begründung | Geprüft durch |
+|---|---|---|---|---|
+| Emojis | beibehalten · Icon-Set | **Einheitliches Icon-Set (120 Symbole)**, auch je Abteilung ein Icon und vier Stimmungs-Gesichter; Dringend = Flamme **und** Wort | Hochwertiger, auf allen Geräten gleich, Status nie nur über ein Symbol | `icons.test.js` (kein Emoji im UI, jedes Icon vorhanden) |
+| Stil | flach · Glas | **Halbtransparente Glas-Panels** (Blur, feine Kante), schwebende Navigation mit gleitendem Indikator, Federkurve bei Sheets; ohne `backdrop-filter` deckender Fallback | Moderner, „teurer“ Eindruck bei ruhiger Bedienung | Screenshots, `check.js` |
+| Bewegung | keine · sanft | **Fade/Slide 180–240 ms, gestaffelte Listen, hochzählende Zahlen**, alles aus bei „Bewegung reduzieren“; blockiert nie Eingaben | Barrierefrei und schnell | `check.js` |
+
+## 10. Aus der Kaufland-Recherche übernommen
+
+| Prozess (Quelle: `docs/kaufland-prozesse.md`) | Möglichkeiten | Entscheidung | Begründung | Geprüft durch |
+|---|---|---|---|---|
+| Ruhezeit nach ArbZG § 5 (Spät bis 22 Uhr → Früh ab 6 Uhr = nur 8 Std) | nur warnen · Anfrage verhindern | **Schichtanfrage wird gar nicht gesendet und Annahme abgelehnt**, wenn weniger als 11 Std Ruhe (gegen Vortag und Folgetag), mit Begründung | Gesetzlich vorgeschrieben; Anfragen, die abgelehnt werden müssen, kosten Zeit | `ops.test.js` |
+| Werbewechsel (Angebotswoche beginnt seit 12.10.2026 montags) | Einzelaufträge · Paket | **Paket „Werbewechsel“**: je Abteilung ein Auftrag mit Checkliste (Rückbau, Aufbau, Schilder prüfen) und Foto-Nachweis mit Freigabe, Fortschritt „x von y“; einmal pro Tag | Montags laufen alle Abteilungen parallel; Leitung sieht den Stand | `ops.test.js` |
+| Frische-/MHD-/Hygiene-/Temperaturrunden (Kaufland nennt Kontrolle zweimal täglich) | Vorlagen · Steuerpult-Rundgänge | **Rundgänge im Steuerpult** mit „In Ordnung/Mangel“; Mangel erzeugt Auftrag oder Meldung (Kühlung: dringend an Admin). Ersetzt **nicht** die offizielle HACCP-Dokumentation | Abweichungen sofort sichtbar | `lead.test.js` |
+| Filial-Tagesübersicht je Prozess | je Person · je Prozess | **Ampel je Prozess**, nie je Person | Betriebsrat-tauglich | `lead.test.js` |
+| Pausenregel | 45 Min ab > 9 Std (gesetzlich) · ab > 8 Std (Hausregel) | **Hausregel bleibt (ab > 8 Std 45 Min)**, im Tarifvertrag gegenprüfen | Vorsichtiger als das Gesetz | – |
+
+## 11. Neu offen für die Filiale
+
+1. **Kaufland Connect:** Die Recherche fand eine Mitarbeiter-App mit Chat (Start in Tschechien belegt; Deutschland/Langenfeld nicht belegt). Mit Filialleitung, Betriebsrat und Datenschutz klären, wie der Schicht-Navigator dazu steht – vor dem Echtbetrieb.
+2. **Sollwerte:** Kühlung (Temperaturgrenzen), Fälligkeiten der Rundgänge (jetzt Frische 9 und 17 Uhr), Soll-Besetzung je Abteilung und Schicht (jetzt Annahmen: Kasse 4, Wareneingang 2, Obst/Gemüse 2, Backshop 2, sonst 1).
+3. **Alte Titel mit Emojis** in einer bestehenden Datenbank werden nicht migriert (neue sind sauber).

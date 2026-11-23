@@ -488,6 +488,10 @@
   function shiftRequest(by, toId, opts, now) {
     opts = opts || {};
     if (!M.emp(toId)) return fail('Person nicht gefunden.');
+    if (SN.ops && opts.day && opts.shift && !opts.swap) {
+      const rc = SN.ops.restCheck(M.emp(toId), opts.day, opts.shift);
+      if (!rc.ok) return fail(M.first(toId) + ': ' + rc.reason);
+    }
     const title = opts.swap ? 'Schichttausch: ' + (opts.day || '') + ' ' + (opts.shift || '') : 'Kannst du ' + (opts.day || '') + ' ' + (opts.shift || '') + ' übernehmen?';
     return send({ kind: 'shiftreq', title: title.replace(/\s+/g, ' ').trim(), body: opts.note || '', req: { day: opts.day || null, date: opts.date || null, shift: opts.shift || null, swap: !!opts.swap }, to: { type: 'person', ids: [toId] } }, by, now);
   }
@@ -497,6 +501,10 @@
     if (!it || it.kind !== 'shiftreq') return { ok: false, reason: 'Anfrage nicht gefunden.' };
     if (isFinal(it)) return { ok: false, reason: 'Die Anfrage ist schon beantwortet.' };
     if (!isRecipient(it, by)) return { ok: false, reason: 'Die Anfrage ist nicht an dich gerichtet.' };
+    if (accept && SN.ops && it.req && it.req.day && it.req.shift) {
+      const rc = SN.ops.restCheck(M.emp(by), it.req.day, it.req.shift);
+      if (!rc.ok) return { ok: false, reason: rc.reason };
+    }
     const swap = it.req && it.req.swap;
     const state = !accept ? 'declined' : swap ? 'taken' : 'accepted';
     const p = { state, answeredAt: now, answeredBy: by, owner: accept ? by : null, seen: { [by]: (it.seen && it.seen[by]) || now } };

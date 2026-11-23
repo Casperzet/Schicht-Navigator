@@ -3,7 +3,7 @@
 Mobile App für Kaufland Langenfeld (~70 Mitarbeitende). Kernziel: schnelle Kommunikation zwischen Leitung und Mitarbeitenden in beide Richtungen – jeder Vorgang hat einen sichtbaren Zustand (gesendet → gesehen → quittiert/übernommen → erledigt) und eskaliert automatisch, wenn niemand reagiert.
 
 ## Regeln (nicht verhandelbar)
-- Oberfläche strikt **Deutsch**. Farben Weiß/Rot (#e10915)/Schwarz, Hell- und Dunkelmodus.
+- Oberfläche strikt **Deutsch**, **keine Emojis** – nur Icons aus `src/ui/icons.svg` (`SN.ui.icon('name')`, Dringend = `SN.ui.urgent()`). Glas-Klassen `sn-glass`, `sn-iconbadge`, `sn-stat`, `sn-pill`. Farben Weiß/Rot (#e10915)/Schwarz, Hell- und Dunkelmodus.
 - Mobile first (390 px), ein Daumen: Ziele ≥ 48 px, Icon immer mit Text, Status nie nur über Farbe, max. 5 Ziele in der Bottom-Navigation.
 - Dringend = 🔥. Keine Minutenangaben in Formularen für Aufträge (Dauer kommt aus Richtwerten je Tätigkeit). Keine Artikelnummern; Mengen nur als KKP, Paletten, Boxen, Displays, Wagen.
 - Limit pro Person = (Std × 60 − Pause) × 0,8; nie darüber zuteilen. Pause: bis 6 Std keine, bis 8 Std 30 Min, darüber 45 Min.
@@ -26,6 +26,10 @@ node test/core.test.js             # Kernlogik
 node test/check.js                 # alle Rollen × Ansichten, hell/dunkel
 node test/flows.js                 # End-to-end inkl. zwei Geräte (Mock-db)
 node test/server.test.js           # Server: Schlüssel, SSE, Löschfrist
+node test/lead.test.js && node test/flows-lead.js          # Steuerpult der Schichtleitung
+node test/overview.test.js && node test/flows-overview.js  # Übersicht/Personal der Filialleitung
+node test/ops.test.js              # Ruhezeit (ArbZG), Werbewechsel
+node test/icons.test.js            # Icon-Sprite vollständig, kein Emoji im UI
 PORT=8090 FILIAL_KEY=langenfeld-test DATA_DIR=/tmp/sn-data node server/server.js &
 SN_SERVER=http://localhost:8090 SN_KEY=langenfeld-test node test/server-flows.js
 cd android-app && npm run apk      # braucht ANDROID_HOME (Android SDK 35)

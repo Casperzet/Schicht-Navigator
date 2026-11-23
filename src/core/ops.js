@@ -206,6 +206,59 @@
     return { ok: true, count: n };
   }
 
+  /* ---------- Ruhezeit (ArbZG § 5: mindestens 11 Stunden zwischen zwei Schichten) ---------- */
+  const REST_H = 11;
+  /** Beginn/Ende der Schicht von e am Wochentag wd (0 = Mo) in Stunden seit Wochenbeginn, oder null wenn frei */
+  function slot(e, wd, shiftName) {
+    if (shiftName) { const s = M.SHIFTS[shiftName]; if (!s) return null; return { s: wd * 24 + s.s, e: wd * 24 + s.e }; }
+    if (!worksOn(e, wd)) return null;
+    const x = shiftOn(e, wd);
+    return { s: wd * 24 + x.s, e: wd * 24 + x.e };
+  }
+  /**
+   * Prüft, ob e am Tag `day` (Mo..So) die Schicht `shiftName` (Früh/Spät) übernehmen kann, ohne die Ruhezeit
+   * zu unterschreiten – gegen die Schicht am Vortag UND am Folgetag. → {ok, gapH, reason}
+   */
+  function restCheck(e, day, shiftName) {
+    const wd = M.DAYS.indexOf(day);
+    if (!e || wd < 0) return { ok: true, gapH: null };
+    const mine = slot(e, wd, shiftName);
+    if (!mine) return { ok: true, gapH: null };
+    const prev = wd > 0 ? slot(e, wd - 1) : null, next = wd < 6 ? slot(e, wd + 1) : null;
+    const gaps = [];
+    if (prev) gaps.push({ gap: mine.s - prev.e, text: 'am Vortag bis ' + String(prev.e % 24).padStart(2, '0') + ':00' });
+    if (next) gaps.push({ gap: next.s - mine.e, text: 'am Folgetag ab ' + String(next.s % 24).padStart(2, '0') + ':00' });
+    const worst = gaps.sort((a, b) => a.gap - b.gap)[0];
+    if (worst && worst.gap < REST_H) return { ok: false, gapH: worst.gap, reason: 'Ruhezeit zu kurz: nur ' + worst.gap + ' Std zwischen den Schichten (' + worst.text + '), vorgeschrieben sind ' + REST_H + ' Std.' };
+    return { ok: true, gapH: worst ? worst.gap : null };
+  }
+
+  /* ---------- Werbewechsel (Angebotswoche beginnt montags) -------------------- */
+  const PROMO_DEPTS = ['Obst und Gemüse', 'MoPro', 'Backshop und Frischetheke', 'Fertige Gerichte', 'Moon Food Abteilung', 'Trocken sortiment', 'Konserven', 'Getränkeabteilung', 'Alkoholische Getränke', 'Drogerie'];
+  const PROMO_STEPS = ['Alte Aktionsware zurückbauen', 'Neue Aktionsfläche aufbauen', 'Preisschilder und Plakate prüfen'];
+  /** Je Abteilung ein Auftrag mit Checkliste und Foto-Nachweis (die Leitung gibt frei) */
+  async function createPromoChange(by, opts, now) {
+    now = now0(now); opts = opts || {};
+    const day = U.fmt.dayKey(now);
+    const exists = SN.store.list('items').filter((it) => it.promoDay === day);
+    if (exists.length && !opts.force) return { ok: false, reason: 'Der Werbewechsel für heute ist schon angelegt (' + exists.length + ' Abteilungen).' };
+    const due = opts.due || now + 4 * U.HOUR;
+    let made = 0;
+    for (const dept of (opts.depts || PROMO_DEPTS)) {
+      const r = await SN.comm.task(by, { title: 'Werbewechsel ' + dept, dept, act: 'Aktionsregal aufbauen', due, escalate: true, proofRequired: true, promoDay: day, checklist: PROMO_STEPS.map((text) => ({ text, done: false })) });
+      if (r.ok) made++;
+    }
+    const d = await SN.dist.run(by, now);
+    await SN.comm.log(by, 'Werbewechsel angelegt: ' + made + ' Abteilungen', now);
+    return { ok: true, made, dist: d };
+  }
+  /** Fortschritt des Werbewechsels heute: {total, done, approved, open[]} */
+  function promoProgress(now) {
+    const day = U.fmt.dayKey(now0(now));
+    const l = SN.store.list('items').filter((it) => it.promoDay === day);
+    return { total: l.length, done: l.filter((it) => it.state === 'done').length, approved: l.filter((it) => it.approved === true).length, open: l.filter((it) => it.state !== 'done').map((it) => it.dept) };
+  }
+
   /* ---------- Wochenplan --------------------------------------------------- */
   const hash = (s) => String(s).split('').reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
   /** Arbeitet e am Tag (0 = Mo)? Plan hat Vorrang, sonst Mo–Sa mit einem rollierenden freien Tag. */
@@ -280,6 +333,7 @@
     PHOTO_CATS, PHOTO_CAT, PHOTO_REPLIES, photoTargets, photoReport,
     UNIT, effortCfg, unitMin, planDelivery, unitsFromCounts, createDelivery, unitLabel,
     SCAN_RULE, scanState, scanUnit, scannedCodes, matchName, rosterPreview, applyRoster,
+    REST_H, restCheck, PROMO_DEPTS, PROMO_STEPS, createPromoChange, promoProgress,
     worksOn, shiftOn, week, forecast, setForecast, dayLoad, distributeDay,
   };
 })(window.SN = window.SN || {});

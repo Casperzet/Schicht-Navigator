@@ -73,7 +73,11 @@
   /* ---------- Vorlagen ---------------------------------------------------------- */
   function templates() {
     const l = U.sortBy(SN.store.list('templates'), (t) => t.at || '');
-    return '<p class="sn-muted">Wiederkehrende Aufträge und Rundgänge. Der Admin vom Dienst legt sie automatisch zur Uhrzeit an; Checklisten eskalieren, wenn nicht abgehakt.</p>'
+    const pp = SN.ops.promoProgress();
+    const promo = '<section class="sn-card sn-glass" style="padding:14px"><h3 class="sn-section-title" style="margin-top:0">' + icon('tag') + ' Werbewechsel (Angebotswoche ab Montag)</h3>'
+      + (pp.total ? '<p><b>' + pp.done + ' von ' + pp.total + '</b> Abteilungen fertig, ' + pp.approved + ' freigegeben.' + (pp.open.length ? ' Offen: ' + esc(pp.open.join(', ')) + '.' : '') + '</p>' : '<p class="sn-muted">Je Abteilung ein Auftrag: Rückbau, Aufbau, Schilder prüfen – mit Foto-Nachweis, den die Leitung freigibt.</p>')
+      + P.btn(pp.total ? 'Nochmal anlegen' : 'Werbewechsel für heute anlegen', 'promo-go', {}, 'primary', 'tag') + '</section>';
+    return promo + '<p class="sn-muted">Wiederkehrende Aufträge und Rundgänge. Der Admin vom Dienst legt sie automatisch zur Uhrzeit an; Checklisten eskalieren, wenn nicht abgehakt.</p>'
       + P.btn('Neue Vorlage', 'tpl-new', {}, 'secondary', 'plus')
       + l.map((t) => '<div class="sn-card" style="padding:12px"><b>' + esc(t.at || '') + ' · ' + esc(t.title) + '</b> ' + (t.u ? SN.ui.urgent() : '') + '<p class="sn-small">' + esc(t.dept + ' · ' + t.act + (t.checklist ? ' · Checkliste (' + t.checklist.length + ')' : '') + ' · ' + (t.days && t.days.length === 6 ? 'Mo–Sa' : 'täglich') + (t.lastRun === U.fmt.dayKey(SN.clock.now()) ? ' · heute angelegt' : '')) + '</p><div class="sn-card__actions">' + P.btn('Jetzt anlegen', 'tpl-run', { id: t.id }, 'secondary') + P.btn('Löschen', 'tpl-del', { id: t.id }, 'ghost') + '</div></div>').join('');
   }
@@ -89,6 +93,11 @@
     const cl = String(ui.sheetVal('tp-check') || '').split('\n').map((x) => x.trim()).filter(Boolean);
     await SN.store.put('templates', id, { id, title, at: ui.sheetVal('tp-at'), dept: ui.sheetVal('tp-dept'), act: ui.sheetVal('tp-act'), min: M.ACT_MIN[ui.sheetVal('tp-act')], u: !!ui.sheetVal('tp-u'), escalate: cl.length > 0, checklist: cl.length ? cl : undefined, days: ui.sheetVal('tp-sat') ? [0, 1, 2, 3, 4, 5] : [0, 1, 2, 3, 4] });
     ui.toast('Vorlage gespeichert'); ui.closeSheet();
+  });
+  ui.on('promo-go', async () => {
+    const pp = SN.ops.promoProgress();
+    const r = await SN.ops.createPromoChange(SN.session.id, { force: pp.total > 0 });
+    ui.result(r, r.ok ? r.made + ' Abteilungen angelegt und verteilt' : '');
   });
   ui.on('tpl-run', async (el) => { const t = SN.store.peek('templates', el.dataset.id); const r = await C.runTemplate(t, SN.session.id); if (ui.result(r, 'Angelegt')) SN.dist.run(SN.session.id); });
   ui.on('tpl-del', async (el) => { await SN.store.del('templates', el.dataset.id); ui.toast('Vorlage gelöscht'); });
