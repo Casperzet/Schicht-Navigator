@@ -50,7 +50,7 @@
   function header(me, now) {
     const t = byId('hdr-title'), s = byId('hdr-sub');
     if (!me) { t.textContent = 'Schicht-Navigator'; s.textContent = 'Kaufland Langenfeld'; return; }
-    t.textContent = greeting(now) + ', ' + M.first(me.id);
+    t.textContent = M.first(me.id);
     const sh = M.shiftWindow(me, now);
     const parts = [M.role(me).label];
     if (me.dept && M.group(me) !== 'admin') parts.push(M.deptOf(me, now));
@@ -117,7 +117,7 @@
     }
     // neue Chatnachricht (nicht im Chat-Tab)
     if (st.tab !== 'chat') {
-      const t = C.threadsFor(me.id).find((x) => x.unread);
+      const t = C.threadsFor(me.id).find((x) => x.unread && (C.messages(x.id).slice(-1)[0] || {}).by !== me.id);
       const lm = t ? C.messages(t.id).slice(-1)[0] : null;
       if (t && lm) {
         t.preview = M.first(lm.by) + ': ' + (lm.text || '📷 Foto');
