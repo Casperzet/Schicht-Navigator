@@ -61,7 +61,7 @@
   }
 
   ui.registerView('home', {
-    label: 'Start', icon: 'home', groups: ['emp', 'lead'], order: 10, render,
+    label: 'Start', icon: 'home', groups: ['emp', 'lead'], order: 10, render, show: (me) => !M.isLead(me),
     badge: (me) => { const n = C.toAck(me.id).length + (M.isLead(me) ? C.inbox(me.id).length : 0); return n ? { n, urgent: C.inbox(me.id).some((i) => i.u) } : 0; },
     fab: (me) => (M.isLead(me) ? { label: 'Senden', icon: 'send', act: 'send-sheet' } : { label: 'Melden', icon: 'camera', act: 'go-report' }),
   });

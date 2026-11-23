@@ -31,6 +31,7 @@ const abs = (p) => path.join(ROOT, p);
 
 const CSS = ['design/tokens.css', 'design/components.css', 'src/app.css'];
 const OPTIONAL_CSS = ['design/tokens.css', 'design/components.css'];
+// zusätzlich: src/views/*.css (je Ansicht eine eigene Datei, alphabetisch nach app.css)
 const CORE = [
   'src/core/util.js',   // SN.util, SN.clock
   'src/core/model.js',  // SN.model
@@ -40,6 +41,8 @@ const CORE = [
   'src/core/dist.js',   // SN.dist
   'src/core/ai.js',     // SN.ai
   'src/core/ops.js',    // SN.ops (Fotobericht, Lieferung, Wochenplan)
+  'src/core/lead.js',   // SN.lead (Schichtleitung: Steuerpult)
+  'src/core/overview.js', // SN.overview (Filialleitung: Übersicht, Personal)
 ];
 const BOOT = 'src/ui/boot.js';
 
@@ -83,7 +86,8 @@ function build(opts) {
   if (!shell.includes('/*CSS*/') || !shell.includes('/*JS*/')) throw new Error('src/shell.html braucht die Platzhalter /*CSS*/ und /*JS*/');
 
   const css = [];
-  for (const f of CSS) {
+  const viewCss = fs.existsSync(abs('src/views')) ? fs.readdirSync(abs('src/views')).filter((n) => n.endsWith('.css')).sort().map((n) => 'src/views/' + n) : [];
+  for (const f of CSS.concat(viewCss)) {
     if (!fs.existsSync(abs(f))) {
       if (OPTIONAL_CSS.includes(f)) { warn.push('Warnung: ' + f + ' fehlt noch – übersprungen.'); continue; }
       throw new Error(f + ' fehlt.');
