@@ -154,7 +154,7 @@
       + (wait && !fin ? '<p class="sn-waiting">' + icon('clock') + esc(wait) + '</p>' : '')
       + (it.kind === 'post' && it.needAck && (it.from === me.id || M.isLead(me)) ? ackbar(it, me) : receipt(it, me))
       + (opts.showTimeline ? steps(it) + timeline(it) : '')
-      + actions(it, me)
+      + (opts.noActions ? '' : actions(it, me))
       + '</article>';
   }
   const lvlIcon = (it) => (it.esc && it.esc.level > 0 ? 'escalate' : 'clock');

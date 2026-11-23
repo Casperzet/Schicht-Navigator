@@ -93,44 +93,7 @@
   ui.on('tpl-run', async (el) => { const t = SN.store.peek('templates', el.dataset.id); const r = await C.runTemplate(t, SN.session.id); if (ui.result(r, 'Angelegt')) SN.dist.run(SN.session.id); });
   ui.on('tpl-del', async (el) => { await SN.store.del('templates', el.dataset.id); ui.toast('Vorlage gelöscht'); });
 
-  /* ---------- Team -------------------------------------------------------------- */
-  function team(sub) {
-    const q = (sub.teamQ || '').toLowerCase();
-    const l = U.sortBy(M.staff().filter((e) => !q || e.name.toLowerCase().includes(q)), (e) => -M.level(e) * 100 + e.name.charCodeAt(0));
-    return '<div class="sn-row" style="gap:8px">' + P.btn('Person hinzufügen', 'st-edit', {}, 'secondary', 'plus') + '<label class="sn-btn sn-btn--secondary" for="roster-photo">' + icon('camera') + '<span>Dienstplan scannen</span></label><input type="file" id="roster-photo" accept="image/*" capture="environment" hidden data-change="roster-photo"></div>'
-      + '<div class="sn-field"><label class="sn-label sn-sr-only" for="team-q">Suche</label><input class="sn-input" id="team-q" placeholder="Name suchen" data-change="team-q" value="' + esc(sub.teamQ || '') + '"></div>'
-      + P.sec('Team', l.length) + '<ul class="sn-list">' + l.map((e) => '<li class="sn-list__item"><button type="button" class="sn-card sn-card--tap" style="width:100%;text-align:left;padding:10px" data-act="st-edit" data-id="' + e.id + '"><span class="sn-list__title">' + esc(e.name) + (e.firstAid ? ' ⛑' : '') + '</span><span class="sn-list__sub">' + esc(M.role(e).label + ' · ' + (e.dept || '–') + ' · ' + (e.sh || '') + ' · ' + (e.h || 8) + ' Std') + '</span></button></li>').join('') + '</ul>';
-  }
-  ui.onChange('team-q', (el) => ui.sub('teamQ', el.value));
-  ui.on('st-edit', (el) => {
-    const e = el.dataset.id ? M.emp(el.dataset.id) : { name: '', role: 'emp', dept: 'Trocken sortiment', sh: 'Früh', h: 8, acts: [], lang: 'de' };
-    ui.sheet(e.id ? e.name : 'Person hinzufügen', '<div class="sn-field"><label class="sn-label" for="se-name">Name</label><input class="sn-input" id="se-name" value="' + esc(e.name) + '"></div>'
-      + '<div class="sn-filter"><div class="sn-field"><label class="sn-label" for="se-role">Rolle</label><select class="sn-select" id="se-role">' + Object.entries(M.ROLES).map(([k, r]) => '<option value="' + k + '"' + (k === e.role ? ' selected' : '') + '>' + esc(r.label) + '</option>').join('') + '</select></div>'
-      + '<div class="sn-field"><label class="sn-label" for="se-dept">Abteilung</label><select class="sn-select" id="se-dept">' + deptOpts(e.dept) + '</select></div></div>'
-      + '<div class="sn-filter"><div class="sn-field"><label class="sn-label" for="se-sh">Schicht</label><select class="sn-select" id="se-sh"><option' + (e.sh === 'Früh' ? ' selected' : '') + '>Früh</option><option' + (e.sh === 'Spät' ? ' selected' : '') + '>Spät</option></select></div>'
-      + '<div class="sn-field"><label class="sn-label" for="se-h">Std/Tag</label><input class="sn-input" type="number" min="2" max="10" id="se-h" value="' + (e.h || 8) + '"></div></div>'
-      + '<div class="sn-field"><label class="sn-label" for="se-lang">Sprache für Übersetzungen</label><select class="sn-select" id="se-lang">' + Object.entries(SN.ai.LANGS).map(([k, l]) => '<option value="' + k + '"' + (k === (e.lang || 'de') ? ' selected' : '') + '>' + esc(l) + '</option>').join('') + '</select></div>'
-      + '<fieldset class="sn-choices"><legend class="sn-label">Tätigkeiten (wichtig für die Verteilung)</legend>' + M.ACTS.map((a) => '<label class="sn-choice"><input type="checkbox" name="se-acts" value="' + esc(a.key) + '"' + ((e.acts || []).includes(a.key) ? ' checked' : '') + '><span>' + esc(a.label) + '</span></label>').join('') + '</fieldset>'
-      + '<label class="sn-check"><input type="checkbox" id="se-fa"' + (e.firstAid ? ' checked' : '') + '>Ersthelfer/in</label><label class="sn-check"><input type="checkbox" id="se-kasse"' + (e.kasse ? ' checked' : '') + '>Kassenberechtigt</label>'
-      + '<div class="sn-field"><label class="sn-label" for="se-pin">PIN ' + (e.id ? '(leer lassen = unverändert)' : '(4–6 Ziffern)') + '</label><input class="sn-input" id="se-pin" inputmode="numeric" maxlength="6"></div>',
-    P.btn('Speichern', 'st-save', { id: e.id || '' }, 'primary', 'check') + (e.id && e.id !== SN.session.id ? P.btn('Entfernen', 'st-del', { id: e.id }, 'ghost') : ''));
-  });
-  ui.on('st-save', async (el) => {
-    const name = String(ui.sheetVal('se-name') || '').trim(); if (name.length < 2) return ui.toast('Bitte einen Namen eingeben.', 'warn');
-    const pin = String(ui.sheetVal('se-pin') || '').trim();
-    if (pin && !/^\d{4,6}$/.test(pin)) return ui.toast('PIN: 4 bis 6 Ziffern.', 'warn');
-    const id = el.dataset.id || U.id('e');
-    const acts = Array.from(document.querySelectorAll('input[name="se-acts"]:checked')).map((x) => x.value);
-    const base = el.dataset.id ? U.clone(M.emp(id)) : { id };
-    Object.assign(base, { name, role: ui.sheetVal('se-role'), dept: ui.sheetVal('se-dept'), sh: ui.sheetVal('se-sh'), h: +ui.sheetVal('se-h') || 8, lang: ui.sheetVal('se-lang'), acts, firstAid: !!ui.sheetVal('se-fa'), kasse: !!ui.sheetVal('se-kasse') });
-    delete base.pin; delete base.hasPin;
-    if (pin) base.pinHash = U.pinHash(id, pin); // PIN nie im Klartext speichern
-    const r = await SN.store.put('staff', id, base);
-    if (!r.ok) return ui.toast('Nicht gespeichert.', 'warn');
-    await C.log(SN.session.id, (el.dataset.id ? 'Person geändert: ' : 'Person angelegt: ') + name);
-    ui.toast('Gespeichert'); ui.closeSheet();
-  });
-  ui.on('st-del', async (el) => { const n = M.name(el.dataset.id); await SN.store.del('staff', el.dataset.id); await C.log(SN.session.id, 'Person entfernt: ' + n); ui.toast('Entfernt'); ui.closeSheet(); });
+  /* Team/Personal: siehe 14-staff.js (Ansicht „staff“, Registerkarte Übersicht → Anwesenheit, Mehr → Personal) */
 
   /* ---------- Einstellungen ------------------------------------------------------- */
   function settings(me, now) {
@@ -140,8 +103,19 @@
       + '<section class="sn-card" style="padding:14px"><h3 class="sn-section-title" style="margin-top:0">⏰ Eskalationsfristen (Minuten ohne Reaktion)</h3>'
       + Object.entries(M.DEADLINE_LABELS).map(([k, l]) => '<div class="sn-field"><label class="sn-label" for="dl-' + k + '">' + esc(l) + '</label><input class="sn-input" type="number" min="1" max="240" id="dl-' + k + '" value="' + s.deadlines[k] + '"></div>').join('')
       + P.btn('Fristen speichern', 'dl-save', {}, 'primary', 'check') + '</section>'
+      + staffing(s)
       + '<p class="sn-muted sn-small">Kette: zuständige Schichtleitung → Teamleitung → Admin vom Dienst → Filialleitung. Benachrichtigungen nur während der eigenen Schicht.</p>';
   }
+  function staffing(s) {
+    return '<section class="sn-card" style="padding:14px"><h3 class="sn-section-title" style="margin-top:0">Soll-Besetzung je Schicht</h3><p class="sn-small sn-muted">Wie viele Mitarbeitende pro Abteilung mindestens da sein sollen. Die Übersicht warnt bei Unterbesetzung.</p>'
+      + '<div class="sn-bars-form">' + M.DEPTS.map((d, i) => '<div class="sn-filter"><span class="sn-label" style="align-self:center">' + esc(d) + '</span>' + M.SHIFT_NAMES.map((sh) => '<div class="sn-field"><label class="sn-label sn-sr-only" for="sf-' + i + '-' + sh + '">' + esc(d + ' ' + sh) + '</label><input class="sn-input" type="number" min="0" max="20" id="sf-' + i + '-' + sh + '" inputmode="numeric" value="' + SN.overview.need(d, sh) + '" aria-label="' + esc(d + ', ' + sh + ' (Mitarbeitende)') + '"></div>').join('') + '</div>').join('') + '</div>'
+      + '<p class="sn-small sn-muted">Links Früh, rechts Spät.</p>' + P.btn('Besetzung speichern', 'sf-save', {}, 'primary', 'check') + '</section>';
+  }
+  ui.on('sf-save', async () => {
+    const st = {};
+    M.DEPTS.forEach((d, i) => { st[d] = {}; for (const sh of M.SHIFT_NAMES) st[d][sh] = Math.min(20, num('sf-' + i + '-' + sh)); });
+    await SN.store.patch('settings', 'main', { staffing: st }); await C.log(SN.session.id, 'Soll-Besetzung geändert'); ui.toast('Besetzung gespeichert');
+  });
   ui.on('duty', async (el) => { await SN.store.patch('settings', 'main', { adminOnDuty: el.dataset.id }); await C.log(SN.session.id, 'Admin vom Dienst: ' + M.name(el.dataset.id)); ui.toast(M.first(el.dataset.id) + ' ist jetzt Admin vom Dienst'); });
   ui.on('dl-save', async () => {
     const d = {}; for (const k of Object.keys(M.DEADLINE_LABELS)) d[k] = Math.max(1, num('dl-' + k) || M.DEFAULT_DEADLINES[k]);
@@ -167,11 +141,11 @@
   }
 
   function render({ me, now, sub }) {
-    const tabs = [['goods', '🚚 Lieferung'], ['stock', '📦 Restware'], ['tpl', '🔁 Vorlagen'], ['team', '👥 Team'], ['set', '⚙️ Einstellungen'], ['mood', '🙂 Stimmung'], ['log', '🧾 Protokoll']];
+    const tabs = [['goods', '🚚 Lieferung'], ['stock', '📦 Restware'], ['tpl', '🔁 Vorlagen'], ['set', '⚙️ Einstellungen'], ['mood', '🙂 Stimmung'], ['log', '🧾 Protokoll']];
     const t = sub.moreTab || 'goods';
     const head = '<div class="sn-chips" role="tablist">' + tabs.map(([k, l]) => '<button type="button" role="tab" class="sn-chip' + (k === t ? ' sn-chip--solid' : ' sn-chip--outline') + '" aria-selected="' + (k === t) + '" data-act="more-tab" data-k="' + k + '">' + l + '</button>').join('') + '</div>';
-    const body = t === 'goods' ? SN.ui.views.ware.render({ me, now, sub, params: {} }) : t === 'stock' ? stock() : t === 'tpl' ? templates() : t === 'team' ? team(sub) : t === 'set' ? settings(me, now) : t === 'mood' ? mood(now) : logView(now);
-    const quick = '<div class="sn-quicklinks">' + P.btn('Wochenplan', 'go-week', {}, 'secondary', 'tasks') + (M.canAiAssist(me) ? P.btn('KI-Diktat', 'go-ai', {}, 'secondary', 'mic') : '') + P.btn('Ich / Abmelden', 'go-me', {}, 'ghost', 'user') + '</div>';
+    const body = t === 'goods' ? SN.ui.views.ware.render({ me, now, sub, params: {} }) : t === 'stock' ? stock() : t === 'tpl' ? templates() : t === 'set' ? settings(me, now) : t === 'mood' ? mood(now) : logView(now);
+    const quick = '<div class="sn-quicklinks">' + P.btn('Personal', 'go-staff', {}, 'secondary', 'users') + P.btn('Wochenplan', 'go-week', {}, 'secondary', 'tasks') + (M.canAiAssist(me) ? P.btn('KI-Diktat', 'go-ai', {}, 'secondary', 'mic') : '') + P.btn('Ich / Abmelden', 'go-me', {}, 'ghost', 'user') + '</div>';
     return quick + head + body;
   }
   ui.registerView('more', { label: 'Mehr', icon: 'menu', groups: ['admin'], order: 50, render });
