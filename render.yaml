@@ -1,0 +1,16 @@
+# Render.com Blueprint: „New → Blueprint“ und dieses Repository wählen
+services:
+  - type: web
+    name: schicht-navigator
+    runtime: docker
+    plan: starter            # dauerhafte Festplatte braucht einen bezahlten Plan
+    healthCheckPath: /api/health
+    envVars:
+      - key: FILIAL_KEY
+        generateValue: true  # Schlüssel steht danach unter Environment – an die Geräte weitergeben
+      - key: DATA_DIR
+        value: /data
+    disk:
+      name: daten
+      mountPath: /data
+      sizeGB: 1
