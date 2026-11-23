@@ -18,7 +18,7 @@
     const st = O.scanState(it);
     return '<p class="sn-muted">Einheit für Einheit scannen. Nach der letzten ist die Tour erledigt.</p>'
       + '<ol class="sn-scanlist">' + st.units.map((u) => '<li class="' + (st.doneNos.has(u.no) ? 'is-done' : st.next && st.next.no === u.no ? 'is-next' : '') + '">'
-        + (st.doneNos.has(u.no) ? '✓ ' : st.next && st.next.no === u.no ? '▶ ' : '○ ') + esc(O.unitLabel(u)) + (u.depts && u.depts.length ? ' <small>' + esc(u.depts.join(', ')) + '</small>' : '') + '</li>').join('') + '</ol>'
+        + icon(st.doneNos.has(u.no) ? 'check-circle' : st.next && st.next.no === u.no ? 'play' : 'circle', 'sn-icon--sm') + ' ' + esc(O.unitLabel(u)) + (u.depts && u.depts.length ? ' <small>' + esc(u.depts.join(', ')) + '</small>' : '') + '</li>').join('') + '</ol>'
       + (msg ? '<div class="sn-alert sn-alert--' + (bad ? 'warn' : 'info') + ' sn-alert--card" role="alert"><p class="sn-alert__title">' + esc(msg) + '</p></div>' : '')
       + '<video id="scan-video" playsinline muted hidden></video>'
       + '<div class="sn-field"><label class="sn-label" for="scan-code">Etikett-Code</label><input class="sn-input" id="scan-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="' + esc(O.SCAN_RULE.text) + '" data-enter="scan-go"></div>'
@@ -35,7 +35,7 @@
     U.vibrate(25);
     if (r.truckDone) { stopCam(); ui.closeSheet(); ui.toast('Lieferung komplett verräumt – Bericht ans System gesendet'); return; }
     if (r.tourDone) { stopCam(); ui.closeSheet(); ui.toast('Tour erledigt – danke!'); return; }
-    open(id, '✓ ' + O.unitLabel(r.unit) + ' gescannt · noch ' + r.left + (SN.store.pending ? ' · wird gesendet, sobald Netz da ist' : ''), false);
+    open(id, O.unitLabel(r.unit) + ' gescannt · noch ' + r.left + (SN.store.pending ? ' · wird gesendet, sobald Netz da ist' : ''), false);
   }
 
   ui.on('scan-open', (el) => open(el.dataset.id));
