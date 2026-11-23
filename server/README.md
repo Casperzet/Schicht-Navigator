@@ -10,7 +10,11 @@ FILIAL_KEY=geheim PORT=8080 DATA_DIR=./server/data node server/server.js
 ```
 Dann im Browser `http://localhost:8080` öffnen, Adresse und Filial-Schlüssel eingeben.
 
-## In die Cloud (empfohlen: Render)
+## In die Cloud
+
+Ausführliche Anleitung für Render, Railway und Fly.io: `docs/DEPLOY.md`.
+
+### Render (empfohlen)
 
 1. Repository auf GitHub pushen (ohne `server/data`).
 2. Auf render.com: **New → Blueprint** → Repository wählen. `render.yaml` legt Dienst, Festplatte (1 GB) und einen zufälligen `FILIAL_KEY` an.

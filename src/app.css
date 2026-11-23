@@ -198,3 +198,5 @@ html, body { height: 100%; overflow: hidden; margin: 0; }
 .sn-tl-shift i { display: block; height: 100%; background: linear-gradient(90deg, #111, #e10915); }
 .sn-tl-tasks { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px; }
 .sn-tl-tasks .sn-chip { font-size: 12px; min-height: 0; padding: 2px 8px; }
+.sn-photo-card__gone { margin: 0; padding: 14px; background: var(--sn-surface-2, #f1f1f1); color: var(--sn-text-muted, #555); font-weight: 600; text-align: center; }
+.sn-photo-card__media:empty { display: none; }

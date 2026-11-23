@@ -18,6 +18,7 @@
     const fresh = C.isRecipient(it, me.id) && !(it.seen || {})[me.id];
     return '<article class="sn-card sn-photo-card' + (it.u ? ' sn-card--urgent' : '') + (fresh ? ' is-new' : '') + '" data-item="' + it.id + '">'
       + (it.u ? '<div class="sn-card__flag">🔥 Dringend</div>' : '')
+      + (it.photosRemoved && !(it.photos || []).length ? '<p class="sn-photo-card__gone">🗑 ' + U.fmt.count(it.photosRemoved, 'Foto', 'Fotos') + ' nach Löschfrist entfernt (Datenschutz)</p>' : '')
       + '<div class="sn-photo-card__media" data-act="ph-open" data-id="' + it.id + '">' + (it.photos || []).slice(0, 4).map((p, i) => '<img alt="Fotobericht ' + (i + 1) + '" loading="lazy" src="' + esc(p) + '">').join('') + (fresh ? '<span class="sn-photo-card__new">Neu</span>' : '') + '</div>'
       + '<div class="sn-photo-card__body"><div class="sn-card__head"><h3 class="sn-card__title">' + esc(it.title) + '</h3>'
       + '<span class="sn-receipt sn-receipt--' + (replies.length ? 'ack' : seenBy.length ? 'read' : 'sent') + '">' + (replies.length ? 'beantwortet' : seenBy.length ? 'gesehen' : 'gesendet') + '</span></div>'

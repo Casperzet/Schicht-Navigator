@@ -11,6 +11,7 @@
      DATA_DIR      Datenordner (Standard ./data)
      FILIAL_KEY    Filial-Schlüssel, den jedes Gerät einmal eingibt (Pflicht im Betrieb)
      ALLOW_ORIGIN  CORS-Herkunft (Standard *; die App sendet den Schlüssel im Header)
+     MEDIA_DAYS    Fotos nach so vielen Tagen löschen (Standard 30, 0 = nie) – Datenschutz
 
    API (alle /api-Aufrufe brauchen  Authorization: Bearer <FILIAL_KEY>,
    SSE und Fotos alternativ ?key=<FILIAL_KEY>):
@@ -85,6 +86,33 @@ function broadcast(col, id, doc) {
 }
 setInterval(() => { for (const res of clients) res.write(': ping\n\n'); }, 20000);
 
+/* ---------- Löschfrist für Fotos (Datenschutz) --------------------------- */
+// Auf Fotos können Mitarbeitende und Kunden zu sehen sein: nach MEDIA_DAYS Tagen
+// werden die Dateien gelöscht und in den Vorgängen als „gelöscht“ markiert.
+const MEDIA_DAYS = process.env.MEDIA_DAYS === undefined ? 30 : Math.max(0, +process.env.MEDIA_DAYS || 0);
+function cleanupMedia(now) {
+  if (!MEDIA_DAYS) return { files: 0, items: 0 };
+  now = now || Date.now();
+  const limit = now - MEDIA_DAYS * 864e5;
+  const dir = path.join(DATA, 'media');
+  let files = 0, items = 0;
+  for (const f of fs.readdirSync(dir)) {
+    const p = path.join(dir, f);
+    try { if (fs.statSync(p).mtimeMs < limit) { fs.unlinkSync(p); files++; } } catch (e) { /* schon weg */ }
+  }
+  for (const [id, it] of Object.entries(db.items)) {
+    if (!Array.isArray(it.photos) || !it.photos.length || !(it.createdAt < limit)) continue;
+    const next = Object.assign({}, it, { photos: [], photosRemoved: it.photos.length });
+    db.items[id] = next; save('items');
+    broadcast('items', id, Object.assign({}, next, { id }));
+    items++;
+  }
+  if (files || items) console.log('[SN] Löschfrist ' + MEDIA_DAYS + ' Tage: ' + files + ' Fotos gelöscht, ' + items + ' Vorgänge bereinigt');
+  return { files, items };
+}
+cleanupMedia();
+setInterval(cleanupMedia, 6 * 3600e3).unref();
+
 /* ---------- HTTP -------------------------------------------------------- */
 function send(res, code, obj, headers) {
   const body = typeof obj === 'string' || Buffer.isBuffer(obj) ? obj : JSON.stringify(obj);
@@ -119,7 +147,7 @@ const server = http.createServer(async (req, res) => {
       if (!APP) return send(res, 404, 'App nicht gebaut (node build.js)', { 'Content-Type': 'text/plain; charset=utf-8' });
       return send(res, 200, fs.readFileSync(APP), { 'Content-Type': 'text/html; charset=utf-8' });
     }
-    if (p === '/api/health') return send(res, 200, { ok: true, name: 'Schicht-Navigator', rev, keyRequired: !!KEY });
+    if (p === '/api/health') return send(res, 200, { ok: true, name: 'Schicht-Navigator', rev, keyRequired: !!KEY, mediaDays: MEDIA_DAYS });
     if (p.startsWith('/media/')) {
       if (!authed(req, url)) return send(res, 401, { error: 'unauthorized' });
       const id = p.slice(7);

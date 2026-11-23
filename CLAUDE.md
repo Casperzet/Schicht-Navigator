@@ -24,6 +24,7 @@ node build.js                      # → dist/index.html
 node test/core.test.js             # Kernlogik
 node test/check.js                 # alle Rollen × Ansichten, hell/dunkel
 node test/flows.js                 # End-to-end inkl. zwei Geräte (Mock-db)
+node test/server.test.js           # Server: Schlüssel, SSE, Löschfrist
 PORT=8090 FILIAL_KEY=langenfeld-test DATA_DIR=/tmp/sn-data node server/server.js &
 SN_SERVER=http://localhost:8090 SN_KEY=langenfeld-test node test/server-flows.js
 cd android-app && npm run apk      # braucht ANDROID_HOME (Android SDK 35)

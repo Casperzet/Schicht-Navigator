@@ -10,6 +10,8 @@ services:
         generateValue: true  # Schlüssel steht danach unter Environment – an die Geräte weitergeben
       - key: DATA_DIR
         value: /data
+      - key: MEDIA_DAYS
+        value: "30"      # Fotos nach 30 Tagen löschen (Datenschutz)
     disk:
       name: daten
       mountPath: /data
