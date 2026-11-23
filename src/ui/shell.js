@@ -16,7 +16,7 @@
   const views = {};
   const acts = {};
   const changes = {};
-  const st = { tab: null, params: {}, sub: {}, dirty: false, lastChatSeen: {}, notified: {}, started: false };
+  const st = { tab: null, params: {}, sub: {}, dirty: false, lastChatSeen: {}, notified: {}, started: false, navIdx: null, seg: {} };
 
   function icon(name, cls) { return '<svg class="sn-icon' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#i-' + name + '"/></svg>'; }
   /** Dringend = Flammen-Icon + Wort (nie nur Symbol) */
@@ -36,6 +36,52 @@
     return Object.values(views)
       .filter((v) => v.label && v.groups.includes(g) && (!v.show || v.show(me)))
       .sort((a, b) => a.order - b.order);
+  }
+
+  /* ---------- Bewegung (nie blockierend; aus bei prefers-reduced-motion) ---------- */
+  const reduced = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+  let enterTimer = 0;
+  /** Ansichtswechsel: Einblenden + gestaffelte Liste (Klasse wird nach der Animation wieder entfernt) */
+  function enter(v) {
+    if (reduced()) return;
+    clearTimeout(enterTimer);
+    v.classList.remove('is-enter'); void v.offsetWidth; v.classList.add('is-enter');
+    enterTimer = setTimeout(() => v.classList.remove('is-enter'), 600);
+    countUp(v);
+  }
+  /** Ganze Zahlen kurz hochzählen (nur reine Zahlen bzw. „a/b“; Endwert steht schon im Text) */
+  function countUp(root) {
+    root.querySelectorAll('[data-count], .sn-ring__value, .sn-stat__value, .sn-schema__cell > b').forEach((el) => {
+      const m = /^(\d{1,5})(\/\d+)?$/.exec(el.textContent.trim());
+      if (!m) return;
+      const to = +m[1], tail = m[2] || '';
+      if (to < 2) return;
+      const t0 = performance.now(), dur = 600;
+      const tick = (t) => {
+        if (!el.isConnected) return;
+        const k = Math.min(1, (t - t0) / dur);
+        el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))) + tail;
+        if (k < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+  }
+  /** Gleitender Indikator: neues Element startet an der alten Position und gleitet zur neuen */
+  function glide(el, idx, prev) {
+    el.style.setProperty('--i', String(prev == null || reduced() ? idx : prev));
+    if (prev != null && prev !== idx && !reduced()) { void el.offsetWidth; requestAnimationFrame(() => el.style.setProperty('--i', String(idx))); }
+  }
+  function segments(root) {
+    root.querySelectorAll('.sn-segment, .sn-segmented').forEach((sg) => {
+      const tabs = Array.from(sg.children).filter((c) => /sn-segment(ed)?__(tab|item)/.test(c.className));
+      const i = tabs.findIndex((t) => t.getAttribute('aria-selected') === 'true' || t.getAttribute('aria-pressed') === 'true');
+      if (i < 0 || !tabs.length) return;
+      const key = (tabs[0].dataset.act || '') + tabs.length;
+      sg.style.setProperty('--n', String(tabs.length));
+      sg.classList.add('has-glider');
+      glide(sg, i, st.seg[key]);
+      st.seg[key] = i;
+    });
   }
 
   /* ---------- Navigation ---------------------------------------------------- */
@@ -69,13 +115,18 @@
     const el = byId('nav');
     if (!me) { el.innerHTML = ''; el.hidden = true; return; }
     el.hidden = false;
-    el.innerHTML = navFor(me).map((v) => {
+    const items = navFor(me);
+    const cur = Math.max(0, items.findIndex((v) => v.tab === st.tab));
+    el.style.setProperty('--n', String(items.length));
+    el.innerHTML = '<span class="sn-nav__glider" aria-hidden="true"></span>' + items.map((v) => {
       const b = v.badge ? v.badge(me) : 0;
       const n = typeof b === 'object' ? b.n : b, urg = typeof b === 'object' && b.urgent;
       return '<button type="button" class="sn-nav__item" data-go="' + v.tab + '"' + (st.tab === v.tab ? ' aria-current="page"' : '') + '>'
         + '<span class="sn-nav__icon">' + (st.tab === v.tab ? iconActive(v.icon || 'home') : icon(v.icon || 'home')) + (n ? '<span class="sn-badge' + (urg ? ' sn-badge--urgent' : '') + '">' + (n > 99 ? '99+' : n) + '</span>' : '') + '</span>'
         + esc(v.label) + '</button>';
     }).join('');
+    glide(el.firstChild, cur, st.navIdx);
+    st.navIdx = cur;
   }
 
   function fab(me, view) {
@@ -159,7 +210,7 @@
     const v = byId('view');
     header(me, now);
     byId('sos').hidden = !me;
-    if (!me) { nav(null); fab(null); byId('banners').innerHTML = ''; v.innerHTML = loginView(); return; }
+    if (!me) { nav(null); fab(null); byId('banners').innerHTML = ''; v.innerHTML = loginView(); if (!keep) enter(v); return; }
     const list = navFor(me);
     // Zugriff: Gruppe passt (auch ohne eigenen Platz in der Navigation)
     const cur = views[st.tab];
@@ -177,11 +228,14 @@
       html = '<div class="sn-alert sn-alert--warn sn-alert--card" role="alert"><p class="sn-alert__title">Diese Ansicht hat einen Fehler.</p><p class="sn-alert__text">Bitte einen anderen Bereich wählen.</p></div>';
     }
     v.innerHTML = html;
+    segments(v);
     if (keep) {
+      v.classList.remove('is-enter');
       restoreInputs(v, snap);
       v.scrollTop = top;
       if (active) { const a = byId(active); if (a) a.focus({ preventScroll: true }); }
     }
+    if (!keep) enter(v);
     if (view && view.mount) try { view.mount(v, { me, now }); } catch (e) { console.error(e); }
   }
   /** Rendern nach Datenänderung: gebündelt; während jemand tippt, erst nach Verlassen des Feldes */
@@ -246,7 +300,7 @@
     const demo = SN.store.mode === 'demo';
     const quick = demo ? [['emp', 'Anna Müller'], ['lead', 'Julia Becker'], ['admin', 'Mustafa'], ['admin', 'Sabine Krämer']]
       .map(([g, n]) => staff.find((e) => e.name === n)).filter(Boolean) : [];
-    return '<section class="sn-login">'
+    return '<section class="sn-login sn-glass">'
       + '<h2 class="sn-section-title">Anmelden</h2>'
       + '<p class="sn-muted">Jede Person hat ein eigenes Konto. ' + (demo ? 'Demo: PIN 1234 für alle.' : 'PIN von der Filialleitung.') + '</p>'
       + '<div class="sn-field"><label class="sn-label" for="lg-u">Konto</label><select class="sn-select" id="lg-u">'
@@ -259,7 +313,7 @@
       + '</section>';
   }
   function setupView() {
-    return '<section class="sn-login"><h2 class="sn-section-title">Filialbetrieb einrichten</h2>'
+    return '<section class="sn-login sn-glass"><h2 class="sn-section-title">Filialbetrieb einrichten</h2>'
       + '<p>Die gemeinsame Datenbank ist noch leer. Lege das erste Admin-Konto an. Weitere Mitarbeitende fügst du danach unter „Mehr → Team“ hinzu.</p>'
       + '<div class="sn-field"><label class="sn-label" for="su-n">Dein Name</label><input class="sn-input" id="su-n" autocomplete="name"></div>'
       + '<div class="sn-field"><label class="sn-label" for="su-r">Rolle</label><select class="sn-select" id="su-r"><option value="admin">Admin (Disponent)</option><option value="fl">Filialleiter/in</option><option value="sfl">Stellv. Filialleiter/in</option></select></div>'
