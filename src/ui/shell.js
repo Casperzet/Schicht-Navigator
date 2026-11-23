@@ -260,21 +260,21 @@
       + '<div class="sn-field"><label class="sn-label" for="su-p">Eigene PIN (4–6 Ziffern)</label><input class="sn-input" id="su-p" inputmode="numeric" maxlength="6"></div>'
       + '<button type="button" class="sn-btn sn-btn--primary sn-btn--lg sn-btn--block" data-act="setup">Konto anlegen</button></section>';
   }
-  on('login', () => {
-    const r = SN.session.login(sheetVal('lg-u'), sheetVal('lg-p'));
+  on('login', async () => {
+    const r = await SN.session.login(sheetVal('lg-u'), sheetVal('lg-p'));
     if (!r.ok) return toast(r.reason, 'warn');
   });
-  on('login-quick', (el) => { SN.session.login(el.dataset.id, (M.emp(el.dataset.id) || {}).pin || SN.session.DEMO_PIN); });
+  on('login-quick', (el) => { SN.session.login(el.dataset.id, SN.session.DEMO_PIN); });
   on('logout', () => { SN.session.logout(); });
   on('setup', async () => {
     const n = String(sheetVal('su-n') || '').trim(), p = String(sheetVal('su-p') || '').trim();
     if (n.length < 2) return toast('Bitte einen Namen eingeben.', 'warn');
     if (!/^\d{4,6}$/.test(p)) return toast('PIN: 4 bis 6 Ziffern.', 'warn');
     const id = U.id('e');
-    const r = await SN.store.put('staff', id, { id, name: n, role: sheetVal('su-r'), dept: 'Info', sh: 'Früh', h: 8, lang: 'de', acts: [], pin: p, aiAssist: false });
+    const r = await SN.store.put('staff', id, { id, name: n, role: sheetVal('su-r'), dept: 'Info', sh: 'Früh', h: 8, lang: 'de', acts: [], pinHash: U.pinHash(id, p), aiAssist: false });
     if (!r.ok) return toast(SN.store.ERROR_TEXT[r.code] || 'Nicht gespeichert.', 'warn');
     await SN.store.put('settings', 'main', { adminOnDuty: id, deadlines: {}, callNeed: {} });
-    SN.session.login(id, p);
+    await SN.session.login(id, p);
   });
 
   /* ---------- Ereignisse --------------------------------------------------------- */

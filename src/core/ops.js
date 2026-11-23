@@ -118,12 +118,92 @@
       const res = await SN.comm.task(by, {
         title: (title || 'Lieferung') + ': Tour ' + (r + 1) + ' · ' + what, dept: 'Wareneinnahme', act: 'Warenverräumung', min: round.min,
         due, u: !!opts.u, escalate: true, checklist, truckId: id, route: round.depts,
+        units: round.units.map((u) => ({ no: u.no, type: u.type, depts: u.depts || [] })), scans: {},
       });
       if (res.ok) made++;
     }
     const d = await SN.dist.run(by, now);
     await SN.comm.log(by, 'Lieferung „' + (title || 'Lieferung') + '“: ' + units.length + ' Einheiten, ' + p.people + ' Touren', now);
     return { ok: true, plan: p, tasks: made, dist: d, truckId: id };
+  }
+
+  /* ---------- Etikett-Scan je Einheit (KKP, Palette, Box) -------------------- */
+  // Format leicht änderbar: Ziffern und Großbuchstaben, 8–20 Zeichen
+  const SCAN_RULE = { re: /^[0-9A-Z]{8,20}$/, text: '8–20 Zeichen, nur Ziffern und Großbuchstaben' };
+  /** Alle bereits gescannten Codes der Filiale → {code: {item, no}} */
+  function scannedCodes() {
+    const out = {};
+    for (const it of SN.store.list('items')) for (const [c, v] of Object.entries(it.scans || {})) out[c] = { item: it, no: v.no };
+    return out;
+  }
+  /** Fortschritt einer Tour: {total, done, next} */
+  function scanState(it) {
+    const units = it.units || [];
+    const done = new Set(Object.values(it.scans || {}).map((v) => v.no));
+    return { total: units.length, done: done.size, next: units.find((u) => !done.has(u.no)) || null, units, doneNos: done };
+  }
+  /**
+   * Etikett scannen: ordnet den Code der nächsten offenen Einheit zu.
+   * Letzte Einheit → Tour erledigt; alle Touren der Lieferung erledigt → Bericht ans System (Protokoll).
+   */
+  async function scanUnit(ref, by, raw, now) {
+    now = now0(now);
+    const it = SN.comm.get(ref);
+    if (!it || !it.units) return { ok: false, reason: 'Tour nicht gefunden.' };
+    const code = String(raw || '').trim().toUpperCase().replace(/\s+/g, '');
+    if (!SCAN_RULE.re.test(code)) return { ok: false, reason: 'Etikett ungültig: ' + SCAN_RULE.text + '.' };
+    const seen = scannedCodes()[code];
+    if (seen) return { ok: false, reason: 'Dieses Etikett wurde schon gescannt (' + seen.item.title.split(':')[0] + ', Einheit ' + seen.no + ').' };
+    const st = scanState(it);
+    if (!st.next) return { ok: false, reason: 'Alle Einheiten dieser Tour sind schon gescannt.' };
+    await SN.store.patch('items', it.id, { scans: { [code]: { no: st.next.no, at: now, by } }, state: 'taken', startedAt: it.startedAt || now });
+    const after = scanState(SN.comm.get(it.id));
+    let tourDone = false, truckDone = false;
+    if (!after.next) {
+      await SN.comm.done(it.id, by, {}, now);
+      tourDone = true;
+      const all = SN.store.list('items').filter((x) => x.truckId && x.truckId === it.truckId);
+      if (all.length && all.every((x) => x.state === 'done')) {
+        await SN.store.patch('trucks', it.truckId, { state: 'done', doneAt: now });
+        await SN.comm.log(by, 'Lieferung vollständig verräumt, Bericht ans System: ' + all.reduce((s, x) => s + (x.units || []).length, 0) + ' Einheiten gescannt', now);
+        truckDone = true;
+      }
+    }
+    return { ok: true, code, unit: st.next, left: after.total - after.done, tourDone, truckDone };
+  }
+
+  /* ---------- Dienstplan-Scan (Admin) ---------------------------------------- */
+  // Namen tolerant abgleichen: Groß-/Kleinschreibung, Akzente, ü/ue, „Nachname, Vorname“
+  const norm = (s) => String(s || '').toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i').replace(/[^a-z ,]/g, ' ').replace(/\s+/g, ' ').trim();
+  const words = (s) => { const n = norm(s); const p = n.includes(',') ? n.split(',').reverse().join(' ') : n; return p.split(' ').filter(Boolean).sort().join(' '); };
+  /** → {state: 'found'|'missing'|'ambiguous', id?, candidates[]} */
+  function matchName(name) {
+    const key = words(name);
+    if (!key) return { state: 'missing', candidates: [] };
+    const all = M.staff();
+    const exact = all.filter((e) => words(e.name) === key);
+    if (exact.length === 1) return { state: 'found', id: exact[0].id, candidates: exact.map((e) => e.id) };
+    const first = key.split(' ');
+    const loose = exact.length ? exact : all.filter((e) => { const w = words(e.name).split(' '); return first.every((x) => w.includes(x)); });
+    if (loose.length === 1) return { state: 'found', id: loose[0].id, candidates: [loose[0].id] };
+    return { state: loose.length ? 'ambiguous' : 'missing', candidates: loose.map((e) => e.id) };
+  }
+  /** Zeilen [{name, days:[{d, off, s, e, p}]}] → Vorschau mit Zuordnung */
+  function rosterPreview(rows) {
+    return (rows || []).filter((r) => r && r.name).map((r) => Object.assign({ name: String(r.name), days: r.days || [] }, matchName(r.name)));
+  }
+  /** Bestätigte Zeilen übernehmen: Wochenplan je Person (plans/<id>) + Protokoll */
+  async function applyRoster(by, rows, now) {
+    let n = 0;
+    for (const r of rows) {
+      if (!r.id) continue;
+      const days = M.DAYS.map((d) => { const x = (r.days || []).find((y) => y && y.d === d) || { off: true }; return { d, off: !!x.off, s: x.s || '06:00', e: x.e || '14:00', p: x.p == null ? null : +x.p }; });
+      await SN.store.put('plans', r.id, { id: r.id, week: U.fmt.dayKey(now0(now)), days, source: 'dienstplan' });
+      n++;
+    }
+    await SN.comm.log(by, 'Dienstplan übernommen: ' + n + ' Personen', now0(now));
+    return { ok: true, count: n };
   }
 
   /* ---------- Wochenplan --------------------------------------------------- */
@@ -199,6 +279,7 @@
   SN.ops = {
     PHOTO_CATS, PHOTO_CAT, PHOTO_REPLIES, photoTargets, photoReport,
     UNIT, effortCfg, unitMin, planDelivery, unitsFromCounts, createDelivery, unitLabel,
+    SCAN_RULE, scanState, scanUnit, scannedCodes, matchName, rosterPreview, applyRoster,
     worksOn, shiftOn, week, forecast, setForecast, dayLoad, distributeDay,
   };
 })(window.SN = window.SN || {});

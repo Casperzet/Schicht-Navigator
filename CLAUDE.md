@@ -16,7 +16,8 @@ Mobile App für Kaufland Langenfeld (~70 Mitarbeitende). Kernziel: schnelle Komm
 - `design/` Designsystem (Klassen-Präfix `sn-`), App-Ergänzungen in `src/app.css`.
 - `server/server.js` Node ohne Abhängigkeiten: REST + SSE, Fotos, `FILIAL_KEY`. Deploy: `Dockerfile`, `render.yaml`.
 - `android-app/` Capacitor-Hülle → APK.
-- `SPEC.md` Spezifikation, `research/` Recherche.
+- `SPEC.md` Spezifikation, `research/` Recherche, `docs/ENTSCHEIDUNGEN.md` alle Produktentscheidungen (Optionen, Wahl, Begründung, Test) – bei neuen Funktionen dort ergänzen.
+- PINs nur als Hash (`SN.util.pinHash`), im Server-Modus prüft der Server (`/api/login`); nie Klartext speichern.
 
 ## Befehle
 ```bash

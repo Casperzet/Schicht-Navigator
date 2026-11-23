@@ -30,7 +30,7 @@ const ACCOUNTS = ['Anna Müller', 'Julia Becker', 'Katarina Novak', 'Mustafa', '
     for (const name of ACCOUNTS) {
       const id = await p.evaluate((n) => (SN.model.staff().find((e) => e.name === n) || {}).id, name);
       if (!id) { problems.push('Konto fehlt: ' + name); continue; }
-      await p.evaluate((i) => { SN.session.logout(); SN.session.login(i, '1234'); }, id);
+      await p.evaluate(async (i) => { SN.session.logout(); await SN.session.login(i, '1234'); }, id);
       await p.waitForTimeout(80);
       const tabs = await p.$$eval('#nav [data-go]', (bs) => bs.map((x) => x.dataset.go));
       if (tabs.length > 5) problems.push(name + ': mehr als 5 Navigationsziele (' + tabs.join(', ') + ')');

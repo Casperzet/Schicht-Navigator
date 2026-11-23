@@ -402,6 +402,14 @@
         return base + j.url + (cfg.key ? '?key=' + encodeURIComponent(cfg.key) : '');
       },
       pending: () => outbox.length,
+      async login(id, pin) {
+        try {
+          const r = await fetch(base + '/api/login', { method: 'POST', headers: hdr(true), body: JSON.stringify({ id, pin }) });
+          if (r.status === 429) return { ok: false, reason: 'Zu viele Versuche. Bitte 5 Minuten warten.' };
+          if (!r.ok) return { ok: false, reason: r.status === 403 ? 'PIN falsch.' : 'Anmelden nicht möglich (' + r.status + ').' };
+          return { ok: true };
+        } catch (e) { return { ok: false, offline: true, reason: 'Keine Verbindung zum Server.' }; }
+      },
     };
   }
 
@@ -509,15 +517,36 @@
     get id() { return current; },
     /** Angemeldete Person (Dokument aus staff) oder null */
     me() { return current ? SN.store.peek('staff', current) : null; },
-    /** Anmelden: {ok, reason?}. PIN = staff.pin, sonst Demo-PIN. */
-    login(empId, pin) {
+    /**
+     * Anmelden → Promise {ok, reason?}. Server-Modus: der Server prüft (PIN-Hashes kommen nie aufs Gerät).
+     * Sonst: pinHash im Konto, alte Klartext-PIN wird beim ersten Anmelden in einen Hash umgewandelt,
+     * ohne PIN gilt die Demo-PIN.
+     */
+    async login(empId, pin) {
       const e = SN.store.peek('staff', empId);
       if (!e) return { ok: false, reason: 'Konto nicht gefunden.' };
-      if (String(pin) !== String(e.pin || SN.session.DEMO_PIN)) return { ok: false, reason: 'PIN falsch.' };
+      pin = String(pin == null ? '' : pin).trim();
+      if (S.mode === 'server' && S.backend.login) {
+        const r = await S.backend.login(empId, pin);
+        if (!r.ok) {
+          // ohne Netz: nur das zuletzt auf diesem Gerät angemeldete Konto
+          const last = (await prefs.get()).empId;
+          if (!(r.offline && last === empId)) return r;
+        }
+      } else if (e.pinHash) {
+        if (U.pinHash(empId, pin) !== e.pinHash) return { ok: false, reason: 'PIN falsch.' };
+      } else if (e.pin) {
+        if (pin !== String(e.pin)) return { ok: false, reason: 'PIN falsch.' };
+        const next = U.clone(e); delete next.pin; next.pinHash = U.pinHash(empId, pin);
+        SN.store.put('staff', empId, next); // Klartext-PIN entfernen
+      } else if (pin !== SN.session.DEMO_PIN) return { ok: false, reason: 'PIN falsch.' };
       current = empId;
       prefs.get().then((p) => prefs.set(Object.assign({}, p, { empId })));
       for (const cb of Array.from(sessL)) safe(cb, empId);
       return { ok: true };
+    },
+    /** PIN-Hash für ein Konto (beim Anlegen/Ändern speichern statt der PIN) */
+    hash(empId, pin) { return U.pinHash(empId, pin);
     },
     logout() { current = null; for (const cb of Array.from(sessL)) safe(cb, null); },
     /** Zuletzt genutztes Konto dieses Viewers (Filialmodus: pro claude.ai-Konto) */

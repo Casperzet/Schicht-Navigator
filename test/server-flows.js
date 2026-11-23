@@ -50,7 +50,7 @@ const act = (p, sel) => p.click(sel).then(() => p.waitForTimeout(150));
     await act(A, '[data-act=setup]');
   } else {
     const id = await A.evaluate(() => SN.model.staff().find((e) => e.role === 'fl').id);
-    await A.evaluate((i) => SN.session.login(i, '4711'), id);
+    await A.evaluate(async (i) => SN.session.login(i, '4711'), id);
   }
   ok(await A.evaluate(() => !!SN.session.me()), 'Filialleitung angemeldet');
   // Team anlegen: Schichtleitung + 6 Mitarbeitende (Früh, Plan für jeden Tag)
@@ -63,7 +63,7 @@ const act = (p, sel) => p.click(sel).then(() => p.waitForTimeout(150));
   const B = await device(b, 'Schichtleitung');
   await B.waitForFunction(() => SN.model.staff().length >= 8, null, { timeout: 8000 }).catch(() => {});
   ok(await B.evaluate(() => SN.model.staff().length) >= 8, 'Gerät B sieht das Team live vom Server');
-  ok(await B.evaluate(() => SN.session.login('e-sl', '1111').ok), 'Schichtleitung meldet sich auf Gerät B an');
+  ok(await B.evaluate(async () => (await SN.session.login('e-sl', '1111')).ok), 'Schichtleitung meldet sich auf Gerät B an');
 
   // Fotobericht mit echtem Upload
   const img = path.join(require('os').tmpdir(), 'sn-test.png'); png(img);

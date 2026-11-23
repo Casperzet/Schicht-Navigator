@@ -24,7 +24,7 @@ async function open(ctx, url, init) {
   return p;
 }
 const idOf = (p, name) => p.evaluate((n) => (SN.model.staff().find((e) => e.name === n) || {}).id, name);
-const login = (p, id) => p.evaluate((i) => { SN.session.logout(); return SN.session.login(i, '1234').ok; }, id);
+const login = (p, id) => p.evaluate(async (i) => { SN.session.logout(); return (await SN.session.login(i, '1234')).ok; }, id);
 const act = (p, sel) => p.click(sel).then(() => p.waitForTimeout(120));
 
 (async () => {
@@ -134,6 +134,48 @@ const act = (p, sel) => p.click(sel).then(() => p.waitForTimeout(120));
   const abs = await p.evaluate((a) => SN.comm.sentBy(a, 'absence')[0], anna);
   ok(abs && abs.standinCall, 'Krankmeldung an Schichtleitung + „Wer kann einspringen?“ gestartet');
 
+  // S4: Restware erfasst jede/r über „Melden“ → Auftrag „einräumen“
+  await login(p, anna);
+  await p.evaluate(() => SN.ui.go('report', {}));
+  await act(p, '[data-act=rest-new]');
+  await p.fill('#rs-name', 'Duschgel, 2 Kartons');
+  await p.fill('#rs-place', 'Lager Gang C');
+  await act(p, '[data-act=rest-go]');
+  ok(await p.evaluate(() => SN.store.list('items').some((i) => i.kind === 'task' && /Restware einräumen: Duschgel/.test(i.title))), 'Restware von Mitarbeiterin erfasst → Auftrag „einräumen“');
+
+  // S3: Lieferung → Tour mit Etikett-Scan je Einheit, Format- und Doppelprüfung
+  const tour = await p.evaluate(async () => {
+    const units = [{ type: 'kkp', depts: ['Drogerie', 'MoPro', 'Konserven', 'Getränkeabteilung'] }, { type: 'pal', depts: ['Getränkeabteilung'] }, { type: 'box', depts: ['Drogerie'] }];
+    const r = await SN.ops.createDelivery(SN.session.id, 'Test-LKW', units);
+    const t = SN.store.list('items').find((i) => i.truckId === r.truckId);
+    await SN.store.patch('items', t.id, { owner: SN.session.id, to: { type: 'person', ids: [SN.session.id] }, state: 'taken' });
+    return { id: t.id, truck: r.truckId, n: t.units.length, tours: r.tasks };
+  });
+  ok(tour.n === 3 && tour.tours === 1, 'Lieferung: 1 Tour mit 3 Einheiten (KKP mit 4 Abteilungen, Palette, Box)');
+  await p.evaluate(() => SN.ui.go('tasks', {}));
+  ok(await p.isVisible('[data-item="' + tour.id + '"] [data-act=scan-open]'), 'Tour zeigt „Etikett scannen (0/3)“ statt „Erledigt“');
+  const bad = await p.evaluate((id) => SN.ops.scanUnit(id, SN.session.id, 'abc'), tour.id);
+  ok(!bad.ok && /ungültig/.test(bad.reason), 'Falsches Format abgelehnt: ' + bad.reason);
+  const sc1 = await p.evaluate((id) => SN.ops.scanUnit(id, SN.session.id, 'KL123456789'), tour.id);
+  const dup = await p.evaluate((id) => SN.ops.scanUnit(id, SN.session.id, 'kl123456789'), tour.id);
+  ok(sc1.ok && !dup.ok && /schon gescannt/.test(dup.reason), 'Doppeltes Etikett abgelehnt (auch klein geschrieben)');
+  await p.evaluate((id) => SN.ops.scanUnit(id, SN.session.id, 'KL123456790'), tour.id);
+  const sc3 = await p.evaluate((id) => SN.ops.scanUnit(id, SN.session.id, 'KL123456791'), tour.id);
+  const tr = await p.evaluate((t) => SN.store.peek('trucks', t).state, tour.truck);
+  ok(sc3.ok && sc3.tourDone && sc3.truckDone && tr === 'done', 'Letzter Scan: Tour erledigt, Lieferung fertig, Bericht ans System');
+
+  // S5: Dienstplan-Scan – tolerante Zuordnung, nur Bestätigtes übernehmen
+  await login(p, mustafa);
+  const ro = await p.evaluate(() => SN.ops.rosterPreview([
+    { name: 'MÜLLER, Anna', days: [{ d: 'Mo', off: false, s: '07:00', e: '15:00', p: 30 }] },
+    { name: 'Xaver Unbekannt', days: [] },
+  ]).map((r) => ({ state: r.state, id: r.id || null })));
+  ok(ro[0].state === 'found' && ro[0].id === anna && ro[1].state === 'missing', 'Dienstplan: „MÜLLER, Anna“ erkannt, Unbekannter markiert');
+  await p.evaluate(() => SN.rosterTest([{ name: 'Müller, Anna', days: [{ d: 'Mo', off: false, s: '07:00', e: '15:00', p: 30 }] }, { name: 'Xaver Unbekannt', days: [] }]));
+  await act(p, '[data-act=roster-apply]');
+  const plan = await p.evaluate((a) => SN.store.peek('plans', a), anna);
+  ok(plan && plan.days[0].s === '07:00' && plan.source === 'dienstplan', 'Nur bestätigte Zeile übernommen (Annas Plan Mo 07:00–15:00)');
+
   // M9: Verteilung nie über das Limit
   const over = await p.evaluate(async () => {
     const me = SN.session.id;
@@ -159,7 +201,7 @@ const act = (p, sel) => p.click(sel).then(() => p.waitForTimeout(120));
   });
   const B = await open(ctx2, DIST + '?mode=db', { shared: true, user: { id: 'u_anna' } });
   await B.waitForFunction(() => SN.model.staff().length >= 2, null, { timeout: 5000 });
-  ok(await B.evaluate((i) => SN.session.login(i, '1111').ok, annaId), 'Zweites Gerät: Anna meldet sich an (eigene PIN)');
+  ok(await B.evaluate(async (i) => (await SN.session.login(i, '1111')).ok, annaId), 'Zweites Gerät: Anna meldet sich an (eigene PIN)');
   await A.evaluate((i) => SN.comm.post(SN.session.id, { to: { type: 'person', ids: [i] }, title: 'Bitte Kasse 4 öffnen', needAck: true, u: true }), annaId);
   await B.waitForSelector('[data-act=it-ack]', { timeout: 5000 }).catch(() => {});
   ok(await B.isVisible('[data-act=it-ack]'), 'Anweisung erscheint LIVE auf Annas Gerät');

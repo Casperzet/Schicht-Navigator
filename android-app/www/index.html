@@ -1210,7 +1210,16 @@ html, body { height: 100%; overflow: hidden; margin: 0; }
 .sn-tl-tasks { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px; }
 .sn-tl-tasks .sn-chip { font-size: 12px; min-height: 0; padding: 2px 8px; }
 .sn-photo-card__gone { margin: 0; padding: 14px; background: var(--sn-surface-2, #f1f1f1); color: var(--sn-text-muted, #555); font-weight: 600; text-align: center; }
-.sn-photo-card__media:empty { display: none; }</style>
+.sn-photo-card__media:empty { display: none; }
+.sn-scanlist { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 4px; }
+.sn-scanlist li { padding: 8px 10px; border-radius: 10px; background: var(--sn-surface-2, #f1f1f1); font-weight: 600; }
+.sn-scanlist li small { font-weight: 500; color: var(--sn-text-muted, #555); }
+.sn-scanlist li.is-next { outline: 2px solid var(--sn-accent, #e10915); }
+.sn-scanlist li.is-done { opacity: .6; text-decoration: line-through; }
+#scan-video { width: 100%; max-height: 220px; object-fit: cover; border-radius: 12px; background: #000; }
+.sn-roster { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sn-roster td { padding: 6px 4px; border-top: 1px solid var(--sn-border, #e5e5e5); vertical-align: top; }
+.sn-roster .is-miss { color: var(--sn-accent-text, #c00812); font-weight: 700; }</style>
 </head>
 <body>
 <!-- Icon-Sprite: build.js setzt hier src/ui/icons.svg ein (falls vorhanden) -->
@@ -1475,11 +1484,41 @@ try {
     });
   }
 
+  /* ---------- SHA-256 (PIN nie im Klartext speichern) -------------------- */
+  function sha256js(str) {
+    const K = [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070, 0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
+    const bytes = Array.from(unescape(encodeURIComponent(str)), (c) => c.charCodeAt(0)); // UTF-8, ohne TextEncoder
+    const l = bytes.length * 8;
+    bytes.push(0x80);
+    while (bytes.length % 64 !== 56) bytes.push(0);
+    for (let i = 7; i >= 0; i--) bytes.push(i > 3 ? 0 : (l >>> (i * 8)) & 255);
+    let h = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+    const r = (x, n) => (x >>> n) | (x << (32 - n));
+    for (let i = 0; i < bytes.length; i += 64) {
+      const w = [];
+      for (let j = 0; j < 16; j++) w[j] = (bytes[i + j * 4] << 24) | (bytes[i + j * 4 + 1] << 16) | (bytes[i + j * 4 + 2] << 8) | bytes[i + j * 4 + 3];
+      for (let j = 16; j < 64; j++) {
+        const s0 = r(w[j - 15], 7) ^ r(w[j - 15], 18) ^ (w[j - 15] >>> 3), s1 = r(w[j - 2], 17) ^ r(w[j - 2], 19) ^ (w[j - 2] >>> 10);
+        w[j] = (w[j - 16] + s0 + w[j - 7] + s1) | 0;
+      }
+      let [a, b, c, d, e, f, g, hh] = h;
+      for (let j = 0; j < 64; j++) {
+        const t1 = (hh + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[j] + w[j]) | 0;
+        const t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+        hh = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+      }
+      h = h.map((x, k) => (x + [a, b, c, d, e, f, g, hh][k]) | 0);
+    }
+    return h.map((x) => (x >>> 0).toString(16).padStart(8, '0')).join('');
+  }
+  /** PIN-Hash: sha256("sn-pin:" + Personal-ID + ":" + PIN) als Hex */
+  function pinHash(empId, pin) { return sha256js('sn-pin:' + empId + ':' + String(pin)); }
+
   SN.clock = clock;
   SN.util = {
     MIN, HOUR, DAY,
     esc, fmt, startOfDay, id, clone, deepMerge, deepFreeze, isObj, uniq, sortBy, slug, debounce,
-    ls, $, $$, vibrate, dataUrlToBlob, shrinkImage,
+    ls, $, $$, vibrate, dataUrlToBlob, shrinkImage, sha256: sha256js, pinHash,
   };
 })(window.SN = window.SN || {});
 } catch (e) { console.error("[SN] Modul src/core/util.js konnte nicht geladen werden:", e); }
@@ -2330,6 +2369,14 @@ try {
         return base + j.url + (cfg.key ? '?key=' + encodeURIComponent(cfg.key) : '');
       },
       pending: () => outbox.length,
+      async login(id, pin) {
+        try {
+          const r = await fetch(base + '/api/login', { method: 'POST', headers: hdr(true), body: JSON.stringify({ id, pin }) });
+          if (r.status === 429) return { ok: false, reason: 'Zu viele Versuche. Bitte 5 Minuten warten.' };
+          if (!r.ok) return { ok: false, reason: r.status === 403 ? 'PIN falsch.' : 'Anmelden nicht möglich (' + r.status + ').' };
+          return { ok: true };
+        } catch (e) { return { ok: false, offline: true, reason: 'Keine Verbindung zum Server.' }; }
+      },
     };
   }
 
@@ -2437,15 +2484,36 @@ try {
     get id() { return current; },
     /** Angemeldete Person (Dokument aus staff) oder null */
     me() { return current ? SN.store.peek('staff', current) : null; },
-    /** Anmelden: {ok, reason?}. PIN = staff.pin, sonst Demo-PIN. */
-    login(empId, pin) {
+    /**
+     * Anmelden → Promise {ok, reason?}. Server-Modus: der Server prüft (PIN-Hashes kommen nie aufs Gerät).
+     * Sonst: pinHash im Konto, alte Klartext-PIN wird beim ersten Anmelden in einen Hash umgewandelt,
+     * ohne PIN gilt die Demo-PIN.
+     */
+    async login(empId, pin) {
       const e = SN.store.peek('staff', empId);
       if (!e) return { ok: false, reason: 'Konto nicht gefunden.' };
-      if (String(pin) !== String(e.pin || SN.session.DEMO_PIN)) return { ok: false, reason: 'PIN falsch.' };
+      pin = String(pin == null ? '' : pin).trim();
+      if (S.mode === 'server' && S.backend.login) {
+        const r = await S.backend.login(empId, pin);
+        if (!r.ok) {
+          // ohne Netz: nur das zuletzt auf diesem Gerät angemeldete Konto
+          const last = (await prefs.get()).empId;
+          if (!(r.offline && last === empId)) return r;
+        }
+      } else if (e.pinHash) {
+        if (U.pinHash(empId, pin) !== e.pinHash) return { ok: false, reason: 'PIN falsch.' };
+      } else if (e.pin) {
+        if (pin !== String(e.pin)) return { ok: false, reason: 'PIN falsch.' };
+        const next = U.clone(e); delete next.pin; next.pinHash = U.pinHash(empId, pin);
+        SN.store.put('staff', empId, next); // Klartext-PIN entfernen
+      } else if (pin !== SN.session.DEMO_PIN) return { ok: false, reason: 'PIN falsch.' };
       current = empId;
       prefs.get().then((p) => prefs.set(Object.assign({}, p, { empId })));
       for (const cb of Array.from(sessL)) safe(cb, empId);
       return { ok: true };
+    },
+    /** PIN-Hash für ein Konto (beim Anlegen/Ändern speichern statt der PIN) */
+    hash(empId, pin) { return U.pinHash(empId, pin);
     },
     logout() { current = null; for (const cb of Array.from(sessL)) safe(cb, null); },
     /** Zuletzt genutztes Konto dieses Viewers (Filialmodus: pro claude.ai-Konto) */
@@ -4089,12 +4157,92 @@ try {
       const res = await SN.comm.task(by, {
         title: (title || 'Lieferung') + ': Tour ' + (r + 1) + ' · ' + what, dept: 'Wareneinnahme', act: 'Warenverräumung', min: round.min,
         due, u: !!opts.u, escalate: true, checklist, truckId: id, route: round.depts,
+        units: round.units.map((u) => ({ no: u.no, type: u.type, depts: u.depts || [] })), scans: {},
       });
       if (res.ok) made++;
     }
     const d = await SN.dist.run(by, now);
     await SN.comm.log(by, 'Lieferung „' + (title || 'Lieferung') + '“: ' + units.length + ' Einheiten, ' + p.people + ' Touren', now);
     return { ok: true, plan: p, tasks: made, dist: d, truckId: id };
+  }
+
+  /* ---------- Etikett-Scan je Einheit (KKP, Palette, Box) -------------------- */
+  // Format leicht änderbar: Ziffern und Großbuchstaben, 8–20 Zeichen
+  const SCAN_RULE = { re: /^[0-9A-Z]{8,20}$/, text: '8–20 Zeichen, nur Ziffern und Großbuchstaben' };
+  /** Alle bereits gescannten Codes der Filiale → {code: {item, no}} */
+  function scannedCodes() {
+    const out = {};
+    for (const it of SN.store.list('items')) for (const [c, v] of Object.entries(it.scans || {})) out[c] = { item: it, no: v.no };
+    return out;
+  }
+  /** Fortschritt einer Tour: {total, done, next} */
+  function scanState(it) {
+    const units = it.units || [];
+    const done = new Set(Object.values(it.scans || {}).map((v) => v.no));
+    return { total: units.length, done: done.size, next: units.find((u) => !done.has(u.no)) || null, units, doneNos: done };
+  }
+  /**
+   * Etikett scannen: ordnet den Code der nächsten offenen Einheit zu.
+   * Letzte Einheit → Tour erledigt; alle Touren der Lieferung erledigt → Bericht ans System (Protokoll).
+   */
+  async function scanUnit(ref, by, raw, now) {
+    now = now0(now);
+    const it = SN.comm.get(ref);
+    if (!it || !it.units) return { ok: false, reason: 'Tour nicht gefunden.' };
+    const code = String(raw || '').trim().toUpperCase().replace(/\s+/g, '');
+    if (!SCAN_RULE.re.test(code)) return { ok: false, reason: 'Etikett ungültig: ' + SCAN_RULE.text + '.' };
+    const seen = scannedCodes()[code];
+    if (seen) return { ok: false, reason: 'Dieses Etikett wurde schon gescannt (' + seen.item.title.split(':')[0] + ', Einheit ' + seen.no + ').' };
+    const st = scanState(it);
+    if (!st.next) return { ok: false, reason: 'Alle Einheiten dieser Tour sind schon gescannt.' };
+    await SN.store.patch('items', it.id, { scans: { [code]: { no: st.next.no, at: now, by } }, state: 'taken', startedAt: it.startedAt || now });
+    const after = scanState(SN.comm.get(it.id));
+    let tourDone = false, truckDone = false;
+    if (!after.next) {
+      await SN.comm.done(it.id, by, {}, now);
+      tourDone = true;
+      const all = SN.store.list('items').filter((x) => x.truckId && x.truckId === it.truckId);
+      if (all.length && all.every((x) => x.state === 'done')) {
+        await SN.store.patch('trucks', it.truckId, { state: 'done', doneAt: now });
+        await SN.comm.log(by, 'Lieferung vollständig verräumt, Bericht ans System: ' + all.reduce((s, x) => s + (x.units || []).length, 0) + ' Einheiten gescannt', now);
+        truckDone = true;
+      }
+    }
+    return { ok: true, code, unit: st.next, left: after.total - after.done, tourDone, truckDone };
+  }
+
+  /* ---------- Dienstplan-Scan (Admin) ---------------------------------------- */
+  // Namen tolerant abgleichen: Groß-/Kleinschreibung, Akzente, ü/ue, „Nachname, Vorname“
+  const norm = (s) => String(s || '').toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i').replace(/[^a-z ,]/g, ' ').replace(/\s+/g, ' ').trim();
+  const words = (s) => { const n = norm(s); const p = n.includes(',') ? n.split(',').reverse().join(' ') : n; return p.split(' ').filter(Boolean).sort().join(' '); };
+  /** → {state: 'found'|'missing'|'ambiguous', id?, candidates[]} */
+  function matchName(name) {
+    const key = words(name);
+    if (!key) return { state: 'missing', candidates: [] };
+    const all = M.staff();
+    const exact = all.filter((e) => words(e.name) === key);
+    if (exact.length === 1) return { state: 'found', id: exact[0].id, candidates: exact.map((e) => e.id) };
+    const first = key.split(' ');
+    const loose = exact.length ? exact : all.filter((e) => { const w = words(e.name).split(' '); return first.every((x) => w.includes(x)); });
+    if (loose.length === 1) return { state: 'found', id: loose[0].id, candidates: [loose[0].id] };
+    return { state: loose.length ? 'ambiguous' : 'missing', candidates: loose.map((e) => e.id) };
+  }
+  /** Zeilen [{name, days:[{d, off, s, e, p}]}] → Vorschau mit Zuordnung */
+  function rosterPreview(rows) {
+    return (rows || []).filter((r) => r && r.name).map((r) => Object.assign({ name: String(r.name), days: r.days || [] }, matchName(r.name)));
+  }
+  /** Bestätigte Zeilen übernehmen: Wochenplan je Person (plans/<id>) + Protokoll */
+  async function applyRoster(by, rows, now) {
+    let n = 0;
+    for (const r of rows) {
+      if (!r.id) continue;
+      const days = M.DAYS.map((d) => { const x = (r.days || []).find((y) => y && y.d === d) || { off: true }; return { d, off: !!x.off, s: x.s || '06:00', e: x.e || '14:00', p: x.p == null ? null : +x.p }; });
+      await SN.store.put('plans', r.id, { id: r.id, week: U.fmt.dayKey(now0(now)), days, source: 'dienstplan' });
+      n++;
+    }
+    await SN.comm.log(by, 'Dienstplan übernommen: ' + n + ' Personen', now0(now));
+    return { ok: true, count: n };
   }
 
   /* ---------- Wochenplan --------------------------------------------------- */
@@ -4170,6 +4318,7 @@ try {
   SN.ops = {
     PHOTO_CATS, PHOTO_CAT, PHOTO_REPLIES, photoTargets, photoReport,
     UNIT, effortCfg, unitMin, planDelivery, unitsFromCounts, createDelivery, unitLabel,
+    SCAN_RULE, scanState, scanUnit, scannedCodes, matchName, rosterPreview, applyRoster,
     worksOn, shiftOn, week, forecast, setForecast, dayLoad, distributeDay,
   };
 })(window.SN = window.SN || {});
@@ -4439,21 +4588,21 @@ try {
       + '<div class="sn-field"><label class="sn-label" for="su-p">Eigene PIN (4–6 Ziffern)</label><input class="sn-input" id="su-p" inputmode="numeric" maxlength="6"></div>'
       + '<button type="button" class="sn-btn sn-btn--primary sn-btn--lg sn-btn--block" data-act="setup">Konto anlegen</button></section>';
   }
-  on('login', () => {
-    const r = SN.session.login(sheetVal('lg-u'), sheetVal('lg-p'));
+  on('login', async () => {
+    const r = await SN.session.login(sheetVal('lg-u'), sheetVal('lg-p'));
     if (!r.ok) return toast(r.reason, 'warn');
   });
-  on('login-quick', (el) => { SN.session.login(el.dataset.id, (M.emp(el.dataset.id) || {}).pin || SN.session.DEMO_PIN); });
+  on('login-quick', (el) => { SN.session.login(el.dataset.id, SN.session.DEMO_PIN); });
   on('logout', () => { SN.session.logout(); });
   on('setup', async () => {
     const n = String(sheetVal('su-n') || '').trim(), p = String(sheetVal('su-p') || '').trim();
     if (n.length < 2) return toast('Bitte einen Namen eingeben.', 'warn');
     if (!/^\d{4,6}$/.test(p)) return toast('PIN: 4 bis 6 Ziffern.', 'warn');
     const id = U.id('e');
-    const r = await SN.store.put('staff', id, { id, name: n, role: sheetVal('su-r'), dept: 'Info', sh: 'Früh', h: 8, lang: 'de', acts: [], pin: p, aiAssist: false });
+    const r = await SN.store.put('staff', id, { id, name: n, role: sheetVal('su-r'), dept: 'Info', sh: 'Früh', h: 8, lang: 'de', acts: [], pinHash: U.pinHash(id, p), aiAssist: false });
     if (!r.ok) return toast(SN.store.ERROR_TEXT[r.code] || 'Nicht gespeichert.', 'warn');
     await SN.store.put('settings', 'main', { adminOnDuty: id, deadlines: {}, callNeed: {} });
-    SN.session.login(id, p);
+    await SN.session.login(id, p);
   });
 
   /* ---------- Ereignisse --------------------------------------------------------- */
@@ -4611,6 +4760,7 @@ try {
       case 'task':
         if (it.owner === me.id) {
           if (it.state !== 'taken') a.push(btn('Starten', 'it-start', { id: it.id }, 'primary', 'play'));
+          else if (it.units && it.units.length) { const sc = SN.ops.scanState(it); a.push(btn('Etikett scannen (' + sc.done + '/' + sc.total + ')', 'scan-open', { id: it.id }, 'primary', 'check')); }
           else a.push(btn('Erledigt', 'it-done', { id: it.id }, 'primary', 'check'));
           a.push(btn('Nachfragen', 'it-ask', { id: it.id }, 'secondary', 'chat'));
           a.push(btn('Zurückgeben', 'it-giveback', { id: it.id }, 'ghost'));
@@ -5015,7 +5165,8 @@ try {
     const c = cat ? M.CAT[cat] : null;
     const dept = sub.repDept || (c && c.dept) || M.deptOf(me, now) || 'Info';
     let h = '<p class="sn-muted">Was ist los? Antippen – die richtige Person bekommt es sofort und du siehst, wer reagiert.</p>'
-      + '<div class="sn-cats">' + M.REPORT_CATS.map((x) => '<button type="button" class="sn-cat" data-act="rep-cat" data-k="' + x.key + '" aria-pressed="' + (x.key === cat) + '"><span aria-hidden="true">' + x.icon + '</span>' + esc(x.label) + '</button>').join('') + '</div>';
+      + '<div class="sn-cats">' + M.REPORT_CATS.map((x) => '<button type="button" class="sn-cat" data-act="rep-cat" data-k="' + x.key + '" aria-pressed="' + (x.key === cat) + '"><span aria-hidden="true">' + x.icon + '</span>' + esc(x.label) + '</button>').join('') + '</div>'
+      + '<div class="sn-quicklinks">' + P.btn('Restware erfassen', 'rest-new', {}, 'secondary', 'plus') + P.btn('Bruch erfassen', 'br-new', {}, 'secondary', 'plus') + '</div>';
     if (c) {
       h += '<section class="sn-card" style="padding:14px;margin-top:12px" id="rep-form"><h2 class="sn-section-title" style="margin-top:0">' + c.icon + ' ' + esc(c.label) + '</h2>'
         + '<p class="sn-small">Geht an: <b>' + esc(whoGets(c.key, dept, me, now)) + '</b> · eskaliert nach ' + U.fmt.dur(M.settings().deadlines[c.dl] || 15) + ' ohne Reaktion</p>'
@@ -5617,6 +5768,74 @@ try {
 })(window.SN = window.SN || {});
 } catch (e) { console.error("[SN] Modul src/views/65-goods.js konnte nicht geladen werden:", e); }
 
+/* ===== src/views/66-scan.js ===== */
+try {
+/* ==========================================================================
+   Etikett-Scan für Lieferungs-Touren: jede KKP, Palette, Box wird beim
+   Abschluss gescannt (Kamera mit BarcodeDetector, Handeingabe, Demo-Scan).
+   Format- und Doppelprüfung; ohne Netz landet der Scan in der Warteschlange.
+   ========================================================================== */
+(function (SN) {
+  'use strict';
+  const U = SN.util, O = SN.ops, ui = SN.ui, P = SN.parts, esc = U.esc, icon = ui.icon;
+  let cam = null; // {stream, timer}
+
+  function stopCam() {
+    if (!cam) return;
+    clearInterval(cam.timer);
+    cam.stream.getTracks().forEach((t) => t.stop());
+    cam = null;
+  }
+  function body(it, msg, bad) {
+    const st = O.scanState(it);
+    return '<p class="sn-muted">Einheit für Einheit scannen. Nach der letzten ist die Tour erledigt.</p>'
+      + '<ol class="sn-scanlist">' + st.units.map((u) => '<li class="' + (st.doneNos.has(u.no) ? 'is-done' : st.next && st.next.no === u.no ? 'is-next' : '') + '">'
+        + (st.doneNos.has(u.no) ? '✓ ' : st.next && st.next.no === u.no ? '▶ ' : '○ ') + esc(O.unitLabel(u)) + (u.depts && u.depts.length ? ' <small>' + esc(u.depts.join(', ')) + '</small>' : '') + '</li>').join('') + '</ol>'
+      + (msg ? '<div class="sn-alert sn-alert--' + (bad ? 'warn' : 'info') + ' sn-alert--card" role="alert"><p class="sn-alert__title">' + esc(msg) + '</p></div>' : '')
+      + '<video id="scan-video" playsinline muted hidden></video>'
+      + '<div class="sn-field"><label class="sn-label" for="scan-code">Etikett-Code</label><input class="sn-input" id="scan-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="' + esc(O.SCAN_RULE.text) + '" data-enter="scan-go"></div>'
+      + '<div class="sn-row" style="gap:8px">' + ('BarcodeDetector' in window ? P.btn('Kamera', 'scan-cam', { id: it.id }, 'secondary', 'camera') : '') + P.btn('Demo-Scan', 'scan-demo', { id: it.id }, 'ghost') + '</div>';
+  }
+  function open(id, msg, bad) {
+    const it = SN.comm.get(id); if (!it) return;
+    const st = O.scanState(it);
+    ui.sheet('Etikett scannen · ' + st.done + ' von ' + st.total, body(it, msg, bad), P.btn('Senden', 'scan-go', { id }, 'primary', 'send'));
+  }
+  async function submit(id, code) {
+    const r = await O.scanUnit(id, SN.session.id, code);
+    if (!r.ok) { U.vibrate(80); open(id, r.reason, true); return; }
+    U.vibrate(25);
+    if (r.truckDone) { stopCam(); ui.closeSheet(); ui.toast('Lieferung komplett verräumt – Bericht ans System gesendet'); return; }
+    if (r.tourDone) { stopCam(); ui.closeSheet(); ui.toast('Tour erledigt – danke!'); return; }
+    open(id, '✓ ' + O.unitLabel(r.unit) + ' gescannt · noch ' + r.left + (SN.store.pending ? ' · wird gesendet, sobald Netz da ist' : ''), false);
+  }
+
+  ui.on('scan-open', (el) => open(el.dataset.id));
+  ui.on('scan-go', (el) => {
+    const id = el.dataset.id || (document.querySelector('[data-act="scan-go"][data-id]') || {}).dataset.id;
+    const v = ui.sheetVal('scan-code');
+    if (!v) return ui.toast('Bitte Code eingeben oder scannen.', 'warn');
+    submit(id, v);
+  });
+  ui.on('scan-demo', (el) => submit(el.dataset.id, 'KL' + String(Date.now()).slice(-9) + Math.floor(Math.random() * 90 + 10)));
+  ui.on('scan-cam', async (el) => {
+    const id = el.dataset.id;
+    try {
+      stopCam();
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      const v = document.getElementById('scan-video');
+      v.hidden = false; v.srcObject = stream; await v.play();
+      const det = new window.BarcodeDetector();
+      cam = { stream, timer: setInterval(async () => {
+        const sheetOpen = document.getElementById('sheet').classList.contains('is-open');
+        if (!sheetOpen) return stopCam();
+        try { const r = await det.detect(v); if (r && r.length) { stopCam(); submit(id, r[0].rawValue); } } catch (e) { /* weiter versuchen */ }
+      }, 300) };
+    } catch (e) { ui.toast('Kamera nicht verfügbar – bitte Code eintippen.', 'warn'); }
+  });
+})(window.SN = window.SN || {});
+} catch (e) { console.error("[SN] Modul src/views/66-scan.js konnte nicht geladen werden:", e); }
+
 /* ===== src/views/70-me.js ===== */
 try {
 /* ==========================================================================
@@ -5932,7 +6151,7 @@ try {
   function team(sub) {
     const q = (sub.teamQ || '').toLowerCase();
     const l = U.sortBy(M.staff().filter((e) => !q || e.name.toLowerCase().includes(q)), (e) => -M.level(e) * 100 + e.name.charCodeAt(0));
-    return P.btn('Person hinzufügen', 'st-edit', {}, 'secondary', 'plus')
+    return '<div class="sn-row" style="gap:8px">' + P.btn('Person hinzufügen', 'st-edit', {}, 'secondary', 'plus') + '<label class="sn-btn sn-btn--secondary" for="roster-photo">' + icon('camera') + '<span>Dienstplan scannen</span></label><input type="file" id="roster-photo" accept="image/*" capture="environment" hidden data-change="roster-photo"></div>'
       + '<div class="sn-field"><label class="sn-label sn-sr-only" for="team-q">Suche</label><input class="sn-input" id="team-q" placeholder="Name suchen" data-change="team-q" value="' + esc(sub.teamQ || '') + '"></div>'
       + P.sec('Team', l.length) + '<ul class="sn-list">' + l.map((e) => '<li class="sn-list__item"><button type="button" class="sn-card sn-card--tap" style="width:100%;text-align:left;padding:10px" data-act="st-edit" data-id="' + e.id + '"><span class="sn-list__title">' + esc(e.name) + (e.firstAid ? ' ⛑' : '') + '</span><span class="sn-list__sub">' + esc(M.role(e).label + ' · ' + (e.dept || '–') + ' · ' + (e.sh || '') + ' · ' + (e.h || 8) + ' Std') + '</span></button></li>').join('') + '</ul>';
   }
@@ -5958,7 +6177,8 @@ try {
     const acts = Array.from(document.querySelectorAll('input[name="se-acts"]:checked')).map((x) => x.value);
     const base = el.dataset.id ? U.clone(M.emp(id)) : { id };
     Object.assign(base, { name, role: ui.sheetVal('se-role'), dept: ui.sheetVal('se-dept'), sh: ui.sheetVal('se-sh'), h: +ui.sheetVal('se-h') || 8, lang: ui.sheetVal('se-lang'), acts, firstAid: !!ui.sheetVal('se-fa'), kasse: !!ui.sheetVal('se-kasse') });
-    if (pin) base.pin = pin;
+    delete base.pin; delete base.hasPin;
+    if (pin) base.pinHash = U.pinHash(id, pin); // PIN nie im Klartext speichern
     const r = await SN.store.put('staff', id, base);
     if (!r.ok) return ui.toast('Nicht gespeichert.', 'warn');
     await C.log(SN.session.id, (el.dataset.id ? 'Person geändert: ' : 'Person angelegt: ') + name);
@@ -6054,6 +6274,48 @@ try {
   });
 })(window.SN = window.SN || {});
 } catch (e) { console.error("[SN] Modul src/views/80-more.js konnte nicht geladen werden:", e); }
+
+/* ===== src/views/82-roster.js ===== */
+try {
+/* ==========================================================================
+   Dienstplan-Scan (Admin): Foto des Dienstplans → KI liest Namen und Zeiten →
+   Vorschau „gefunden / nicht gefunden / mehrdeutig“ → nur Bestätigtes übernehmen.
+   ========================================================================== */
+(function (SN) {
+  'use strict';
+  const U = SN.util, M = SN.model, O = SN.ops, ui = SN.ui, P = SN.parts, esc = U.esc;
+  let rows = [];
+
+  function preview() {
+    const people = U.sortBy(M.staff(), (e) => e.name);
+    const found = rows.filter((r) => r.state === 'found').length;
+    return '<p>' + found + ' von ' + rows.length + ' Namen sicher zugeordnet. Nicht gefundene bitte zuordnen oder abwählen.</p>'
+      + '<table class="sn-roster"><tbody>' + rows.map((r, i) => '<tr><td><label class="sn-check"><input type="checkbox" id="ro-on-' + i + '"' + (r.state === 'found' ? ' checked' : '') + '></label></td>'
+        + '<td><b class="' + (r.state === 'found' ? '' : 'is-miss') + '">' + esc(r.name) + '</b><br><small>' + (r.state === 'found' ? '✓ gefunden' : r.state === 'ambiguous' ? '⚠ mehrdeutig' : '✗ nicht gefunden') + ' · '
+        + esc((r.days || []).filter((d) => !d.off).map((d) => d.d + ' ' + d.s + '–' + d.e).join(', ') || 'frei') + '</small>'
+        + '<select class="sn-select" id="ro-id-' + i + '" aria-label="Zuordnung für ' + esc(r.name) + '"><option value="">– Person wählen –</option>'
+        + (r.candidates.length ? r.candidates : people.map((e) => e.id)).map((id) => '<option value="' + id + '"' + (id === r.id ? ' selected' : '') + '>' + esc(M.name(id)) + '</option>').join('')
+        + '</select></td></tr>').join('') + '</tbody></table>';
+  }
+  ui.onChange('roster-photo', async (el) => {
+    const f = el.files && el.files[0]; if (!f) return;
+    if (!SN.ai.available().images) return ui.toast('Dienstplan lesen geht nur in der Claude-Ansicht. Pläne einzeln unter „Ich“ bearbeiten.', 'warn');
+    ui.toast('Dienstplan wird gelesen …', 'info');
+    const img = await U.shrinkImage(f, 1600, 0.75);
+    const out = await SN.ai.image('Das Foto zeigt den Dienstplan einer Supermarkt-Filiale: pro Mitarbeiter Name und Arbeitszeiten je Tag. Antworte NUR mit JSON-Array [{"name":"Vorname Nachname","days":[{"d":"Mo","off":false,"s":"HH:MM","e":"HH:MM","p":Pause in Minuten oder null}]}] mit Mo bis So. off=true bei frei, Urlaub oder krank.', [img.blob]);
+    if (!Array.isArray(out)) return ui.toast('Dienstplan nicht erkannt. Bitte gerader und näher fotografieren.', 'warn');
+    rows = O.rosterPreview(out);
+    ui.sheet('Dienstplan prüfen', preview(), P.btn('Bestätigte übernehmen', 'roster-apply', {}, 'primary', 'check'));
+  });
+  ui.on('roster-apply', async () => {
+    const sel = rows.map((r, i) => Object.assign({}, r, { id: ui.sheetVal('ro-on-' + i) ? ui.sheetVal('ro-id-' + i) || null : null })).filter((r) => r.id);
+    if (!sel.length) return ui.toast('Keine Zeile ausgewählt.', 'warn');
+    const r = await O.applyRoster(SN.session.id, sel);
+    ui.result(r, r.count + ' Wochenpläne übernommen'); ui.closeSheet(); rows = [];
+  });
+  SN.rosterTest = (data) => { rows = O.rosterPreview(data); ui.sheet('Dienstplan prüfen', preview(), P.btn('Bestätigte übernehmen', 'roster-apply', {}, 'primary', 'check')); };
+})(window.SN = window.SN || {});
+} catch (e) { console.error("[SN] Modul src/views/82-roster.js konnte nicht geladen werden:", e); }
 
 /* ===== src/views/90-clean.js ===== */
 try {

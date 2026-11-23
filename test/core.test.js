@@ -554,8 +554,17 @@ test('Store (Demo): Abos asynchron, tiefer Merge, Arrays ersetzen, eingefroren',
   assert.throws(() => SN.store.put('items', 'a/b', {}), /Ungültige Dokument-ID/);
   assert.throws(() => SN.store.put('gibtsnicht', 'a', {}), /Unbekannte Collection/);
   // Anmeldung
-  assert.strictEqual(SN.session.login('e001', '0000').ok, false);
-  assert.strictEqual(SN.session.login('e001', '1234').ok, true);
+  assert.strictEqual((await SN.session.login('e001', '0000')).ok, false);
+  assert.strictEqual((await SN.session.login('e001', '1234')).ok, true);
+  // PIN wird nie im Klartext gespeichert: Klartext-PIN wird beim Anmelden zu einem Hash
+  await SN.store.put('staff', 'e001', Object.assign({}, SN.store.peek('staff', 'e001'), { pin: '4711' }));
+  assert.strictEqual((await SN.session.login('e001', '4711')).ok, true);
+  await SN.store.settle();
+  const e1 = SN.store.peek('staff', 'e001');
+  assert.ok(!('pin' in e1) && e1.pinHash === SN.util.pinHash('e001', '4711'), 'PIN nur als Hash');
+  assert.strictEqual(SN.util.sha256('abc'), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
+  assert.strictEqual((await SN.session.login('e001', '4711')).ok, true);
+  assert.strictEqual((await SN.session.login('e001', '1234')).ok, false);
   assert.strictEqual(SN.session.me().name, 'Anna Müller');
 });
 

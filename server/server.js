@@ -21,6 +21,7 @@
      PUT    /api/doc/:col/:id           Dokument ersetzen
      PATCH  /api/doc/:col/:id           tief mergen (legt an, falls neu)
      DELETE /api/doc/:col/:id
+     POST   /api/login                  {id, pin} → 200 / 403 (PIN falsch) / 429 (zu viele Versuche)
      POST   /api/media                  Rohbild (image/jpeg|png|webp, ≤ 6 MB) → {id, url}
      GET    /media/:id                  Foto
      GET    /                           Web-App (dist/index.html)
@@ -52,6 +53,23 @@ for (const c of COLS) {
 }
 try { rev = JSON.parse(fs.readFileSync(path.join(DATA, 'meta.json'), 'utf8')).rev || 0; } catch (e) { /* neu */ }
 
+/* ---------- PINs: nur als Hash, nie an Geräte ---------------------------- */
+const pinHash = (id, pin) => crypto.createHash('sha256').update('sn-pin:' + id + ':' + String(pin)).digest('hex');
+/** Klartext-PIN in Hash umwandeln (beim Schreiben und beim Start) */
+function sealPin(id, doc, prev) {
+  if (doc.pin !== undefined && doc.pin !== null && doc.pin !== '') { doc.pinHash = pinHash(id, doc.pin); }
+  delete doc.pin;
+  if (!doc.pinHash && prev && prev.pinHash) doc.pinHash = prev.pinHash; // Bearbeiten ohne PIN behält sie
+  return doc;
+}
+for (const [id, d] of Object.entries(db.staff)) if (d.pin) sealPin(id, d);
+/** Was Geräte sehen: Personal ohne PIN-Hash */
+const outward = (col, doc) => {
+  if (col !== 'staff' || !doc) return doc;
+  const o = Object.assign({}, doc); const had = !!o.pinHash; delete o.pinHash; delete o.pin; o.hasPin = had; return o;
+};
+const tries = new Map(); // id → [Zeitpunkte]
+
 const dirty = new Set();
 let saveT = null;
 function save(col) {
@@ -80,7 +98,7 @@ function merge(a, b) {
 const clients = new Set();
 function broadcast(col, id, doc) {
   rev++;
-  const msg = 'id: ' + rev + '\ndata: ' + JSON.stringify({ rev, col, id, doc }) + '\n\n';
+  const msg = 'id: ' + rev + '\ndata: ' + JSON.stringify({ rev, col, id, doc: outward(col, doc) }) + '\n\n';
   for (const res of clients) res.write(msg);
   return rev;
 }
@@ -161,7 +179,7 @@ const server = http.createServer(async (req, res) => {
 
     if (p === '/api/snapshot') {
       const cols = {};
-      for (const c of COLS) cols[c] = Object.entries(db[c]).map(([id, d]) => Object.assign({}, d, { id }));
+      for (const c of COLS) cols[c] = Object.entries(db[c]).map(([id, d]) => outward(c, Object.assign({}, d, { id })));
       return send(res, 200, { rev, cols });
     }
     if (p === '/api/events') {
@@ -170,6 +188,18 @@ const server = http.createServer(async (req, res) => {
       clients.add(res);
       req.on('close', () => clients.delete(res));
       return;
+    }
+    if (p === '/api/login' && req.method === 'POST') {
+      let b;
+      try { b = JSON.parse((await readBody(req, 4096)).toString('utf8')); } catch (e) { return send(res, 400, { error: 'invalid_json' }); }
+      const id = String(b.id || ''), e = db.staff[id];
+      if (!e) return send(res, 404, { error: 'not_found' });
+      const now = Date.now(), t = (tries.get(id) || []).filter((x) => now - x < 5 * 60e3);
+      if (t.length >= 8) return send(res, 429, { error: 'too_many' });
+      const good = e.pinHash ? e.pinHash === pinHash(id, b.pin) : String(b.pin) === '1234' && !KEY;
+      if (!good) { t.push(now); tries.set(id, t); return send(res, 403, { error: 'wrong_pin' }); }
+      tries.delete(id);
+      return send(res, 200, { ok: true });
     }
     if (p === '/api/media' && req.method === 'POST') {
       const type = (req.headers['content-type'] || '').split(';')[0];
@@ -194,7 +224,8 @@ const server = http.createServer(async (req, res) => {
       try { data = JSON.parse((await readBody(req, MAX_JSON)).toString('utf8')); } catch (e) { return send(res, e.code === 413 ? 413 : 400, { error: e.code === 413 ? 'too_large' : 'invalid_json' }); }
       if (!isObj(data)) return send(res, 400, { error: 'invalid_argument' });
       delete data.id;
-      const next = req.method === 'PUT' ? data : merge(db[col][id], data);
+      let next = req.method === 'PUT' ? data : merge(db[col][id], data);
+      if (col === 'staff') next = sealPin(id, next, db[col][id]);
       db[col][id] = next; save(col);
       return send(res, 200, { ok: true, rev: broadcast(col, id, Object.assign({}, next, { id })) });
     }

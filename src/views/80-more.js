@@ -97,7 +97,7 @@
   function team(sub) {
     const q = (sub.teamQ || '').toLowerCase();
     const l = U.sortBy(M.staff().filter((e) => !q || e.name.toLowerCase().includes(q)), (e) => -M.level(e) * 100 + e.name.charCodeAt(0));
-    return P.btn('Person hinzufügen', 'st-edit', {}, 'secondary', 'plus')
+    return '<div class="sn-row" style="gap:8px">' + P.btn('Person hinzufügen', 'st-edit', {}, 'secondary', 'plus') + '<label class="sn-btn sn-btn--secondary" for="roster-photo">' + icon('camera') + '<span>Dienstplan scannen</span></label><input type="file" id="roster-photo" accept="image/*" capture="environment" hidden data-change="roster-photo"></div>'
       + '<div class="sn-field"><label class="sn-label sn-sr-only" for="team-q">Suche</label><input class="sn-input" id="team-q" placeholder="Name suchen" data-change="team-q" value="' + esc(sub.teamQ || '') + '"></div>'
       + P.sec('Team', l.length) + '<ul class="sn-list">' + l.map((e) => '<li class="sn-list__item"><button type="button" class="sn-card sn-card--tap" style="width:100%;text-align:left;padding:10px" data-act="st-edit" data-id="' + e.id + '"><span class="sn-list__title">' + esc(e.name) + (e.firstAid ? ' ⛑' : '') + '</span><span class="sn-list__sub">' + esc(M.role(e).label + ' · ' + (e.dept || '–') + ' · ' + (e.sh || '') + ' · ' + (e.h || 8) + ' Std') + '</span></button></li>').join('') + '</ul>';
   }
@@ -123,7 +123,8 @@
     const acts = Array.from(document.querySelectorAll('input[name="se-acts"]:checked')).map((x) => x.value);
     const base = el.dataset.id ? U.clone(M.emp(id)) : { id };
     Object.assign(base, { name, role: ui.sheetVal('se-role'), dept: ui.sheetVal('se-dept'), sh: ui.sheetVal('se-sh'), h: +ui.sheetVal('se-h') || 8, lang: ui.sheetVal('se-lang'), acts, firstAid: !!ui.sheetVal('se-fa'), kasse: !!ui.sheetVal('se-kasse') });
-    if (pin) base.pin = pin;
+    delete base.pin; delete base.hasPin;
+    if (pin) base.pinHash = U.pinHash(id, pin); // PIN nie im Klartext speichern
     const r = await SN.store.put('staff', id, base);
     if (!r.ok) return ui.toast('Nicht gespeichert.', 'warn');
     await C.log(SN.session.id, (el.dataset.id ? 'Person geändert: ' : 'Person angelegt: ') + name);

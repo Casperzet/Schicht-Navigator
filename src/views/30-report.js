@@ -19,7 +19,8 @@
     const c = cat ? M.CAT[cat] : null;
     const dept = sub.repDept || (c && c.dept) || M.deptOf(me, now) || 'Info';
     let h = '<p class="sn-muted">Was ist los? Antippen – die richtige Person bekommt es sofort und du siehst, wer reagiert.</p>'
-      + '<div class="sn-cats">' + M.REPORT_CATS.map((x) => '<button type="button" class="sn-cat" data-act="rep-cat" data-k="' + x.key + '" aria-pressed="' + (x.key === cat) + '"><span aria-hidden="true">' + x.icon + '</span>' + esc(x.label) + '</button>').join('') + '</div>';
+      + '<div class="sn-cats">' + M.REPORT_CATS.map((x) => '<button type="button" class="sn-cat" data-act="rep-cat" data-k="' + x.key + '" aria-pressed="' + (x.key === cat) + '"><span aria-hidden="true">' + x.icon + '</span>' + esc(x.label) + '</button>').join('') + '</div>'
+      + '<div class="sn-quicklinks">' + P.btn('Restware erfassen', 'rest-new', {}, 'secondary', 'plus') + P.btn('Bruch erfassen', 'br-new', {}, 'secondary', 'plus') + '</div>';
     if (c) {
       h += '<section class="sn-card" style="padding:14px;margin-top:12px" id="rep-form"><h2 class="sn-section-title" style="margin-top:0">' + c.icon + ' ' + esc(c.label) + '</h2>'
         + '<p class="sn-small">Geht an: <b>' + esc(whoGets(c.key, dept, me, now)) + '</b> · eskaliert nach ' + U.fmt.dur(M.settings().deadlines[c.dl] || 15) + ' ohne Reaktion</p>'

@@ -50,6 +50,18 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     while (Date.now() - t0 < 3000 && (txt.match(/"col":"items"/g) || []).length < 2) { const r = await reader.read(); txt += Buffer.from(r.value || []).toString(); }
     ctl.abort();
     ok(/"acks":\{"a":1,"b":2\}/.test(txt), 'PATCH mergt tief (gleichzeitige Quittungen gehen nicht verloren) und kommt live per SSE');
+    // PINs: nur als Hash, nie an Geräte, Login mit Sperre
+    const H = { Authorization: 'Bearer k1', 'Content-Type': 'application/json' };
+    await fetch(base + '/api/doc/staff/e1', { method: 'PUT', headers: H, body: JSON.stringify({ name: 'Anna', role: 'emp', pin: '4711' }) });
+    await fetch(base + '/api/doc/staff/e1', { method: 'PUT', headers: H, body: JSON.stringify({ name: 'Anna B.', role: 'emp' }) });
+    const st = (await (await fetch(base + '/api/snapshot', { headers: H })).json()).cols.staff.find((x) => x.id === 'e1');
+    ok(st && !('pin' in st) && !('pinHash' in st) && st.hasPin === true && st.name === 'Anna B.', 'PIN nie an Geräte; Bearbeiten ohne PIN behält sie');
+    const disk = JSON.parse(await new Promise((r) => setTimeout(() => r(fs.readFileSync(path.join(dir, 'staff.json'), 'utf8')), 400)));
+    ok(!JSON.stringify(disk).includes('4711') && /^[0-9a-f]{64}$/.test(disk.e1.pinHash), 'Auf der Platte nur der Hash, keine Klartext-PIN');
+    const login = (pin) => fetch(base + '/api/login', { method: 'POST', headers: H, body: JSON.stringify({ id: 'e1', pin }) }).then((r) => r.status);
+    ok(await login('4711') === 200 && await login('0000') === 403, 'Login: richtige PIN 200, falsche 403');
+    let last = 0; for (let i = 0; i < 9; i++) last = await login('9999');
+    ok(last === 429, 'Nach 8 Fehlversuchen in 5 Min gesperrt (429)');
     ok((await fetch(base + '/api/doc/unbekannt/x', { method: 'PUT', headers: { Authorization: 'Bearer k1' }, body: '{}' })).status === 400, 'Unbekannte Collection: 400');
     ok((await fetch(base + '/api/media', { method: 'POST', headers: { Authorization: 'Bearer k1', 'Content-Type': 'text/html' }, body: '<script>' })).status === 415, 'Nur Bilder als Upload (415 sonst)');
   } finally {

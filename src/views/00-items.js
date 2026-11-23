@@ -77,6 +77,7 @@
       case 'task':
         if (it.owner === me.id) {
           if (it.state !== 'taken') a.push(btn('Starten', 'it-start', { id: it.id }, 'primary', 'play'));
+          else if (it.units && it.units.length) { const sc = SN.ops.scanState(it); a.push(btn('Etikett scannen (' + sc.done + '/' + sc.total + ')', 'scan-open', { id: it.id }, 'primary', 'check')); }
           else a.push(btn('Erledigt', 'it-done', { id: it.id }, 'primary', 'check'));
           a.push(btn('Nachfragen', 'it-ask', { id: it.id }, 'secondary', 'chat'));
           a.push(btn('Zurückgeben', 'it-giveback', { id: it.id }, 'ghost'));
