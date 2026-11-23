@@ -266,7 +266,7 @@
     }).then(() => ok({ item: get(it.id) }));
   }
 
-  /** ➕ Auftrag aus einer Meldung (Meldung gilt als übernommen) */
+  /** Auftrag aus einer Meldung (Meldung gilt als übernommen) */
   async function toTask(ref, by, extra, now) {
     const it = get(ref); now = now0(now);
     if (!it) return { ok: false, reason: 'Meldung nicht gefunden.' };
@@ -553,7 +553,7 @@
   function kudos(by, toId, text) {
     return post(by, { to: { type: 'person', ids: [toId] }, title: 'Danke!', body: text || '', kudos: true });
   }
-  /** Stimmung abgeben (anonym, nur Aggregat je Tag + Schicht): value 1..4 (1 = 😀) */
+  /** Stimmung abgeben (anonym, nur Aggregat je Tag + Schicht): value 1..4 (1 = sehr gut, 4 = schlecht) */
   function vote(value, shift, now) {
     now = now0(now);
     const v = Math.min(4, Math.max(1, Math.round(value)));
@@ -610,7 +610,7 @@
   }
 
   /* ---------- Abfragen für Ansichten -------------------------------------- */
-  /** Sortierung: 🔥 zuerst, dann früheste Frist, dann neueste */
+  /** Sortierung: Dringendes zuerst, dann früheste Frist, dann neueste */
   const dueOf = (it) => it.due || it.ackDue || Infinity;
   const urgentFirst = (a) => a.slice().sort((x, y) => (y.u ? 1 : 0) - (x.u ? 1 : 0) || (dueOf(x) - dueOf(y)) || (y.createdAt - x.createdAt));
   const INBOX_KINDS = ['report', 'absence', 'call', 'sos', 'handover', 'shiftreq', 'photo'];
@@ -657,12 +657,12 @@
       if (isFinal(it)) continue;
       const lvl = (it.esc && it.esc.level) || 0;
       if (it.kind === 'sos') out.push({ type: 'sos', item: it, level: 9, text: it.title + ' · ' + waitingOn(it, now) });
-      else if ((it.kind === 'report' || it.kind === 'absence') && it.state !== 'taken') out.push({ type: 'report', item: it, level: lvl + (it.u ? 1 : 0), text: (it.u ? '🔥 ' : '') + it.title + ' · ' + waitingOn(it, now) });
+      else if ((it.kind === 'report' || it.kind === 'absence') && it.state !== 'taken') out.push({ type: 'report', item: it, level: lvl + (it.u ? 1 : 0), text: (it.u ? 'Dringend: ' : '') + it.title + ' · ' + waitingOn(it, now) });
       else if (it.kind === 'post' && it.needAck && ((it.esc && it.esc.level > 0) || (it.ackDue && now >= it.ackDue)) && ackStats(it).open.length) out.push({ type: 'post', item: it, level: lvl, text: it.title + ' · ' + waitingOn(it, now) });
-      else if (it.kind === 'task' && it.u && !it.owner) out.push({ type: 'task', item: it, level: 1, text: '🔥 ' + it.title + ' · unbesetzt' });
+      else if (it.kind === 'task' && it.u && !it.owner) out.push({ type: 'task', item: it, level: 1, text: 'Dringend: ' + it.title + ' · unbesetzt' });
       else if (it.kind === 'call' && it.need > 0 && !callStatus(it).enough) out.push({ type: 'call', item: it, level: lvl + 1, text: it.title + ' · ' + waitingOn(it, now) });
     }
-    if (SN.dist) for (const d of SN.dist.overloaded(now)) out.push({ type: 'dept', dept: d.dept, level: 0, text: '⚠ ' + d.dept + ' überlastet: ' + U.fmt.dur(d.open) + ' offen, ' + U.fmt.count(d.people, 'Person', 'Personen') + ' da' });
+    if (SN.dist) for (const d of SN.dist.overloaded(now)) out.push({ type: 'dept', dept: d.dept, level: 0, text: d.dept + ' überlastet: ' + U.fmt.dur(d.open) + ' offen, ' + U.fmt.count(d.people, 'Person', 'Personen') + ' da' });
     return U.sortBy(out, (x) => -x.level);
   }
 
@@ -756,7 +756,7 @@
     const r = (t.read && t.read[by]) || 0;
     return Object.values(t.msgs || {}).filter((m) => m && m.by !== by && m.at > r).length;
   }
-  /** Lesehaken: 'read' (✓✓), wenn ein anderes Mitglied nach der Nachricht gelesen hat, sonst 'sent' (✓) */
+  /** Lesehaken: 'read' (Doppelhaken), wenn ein anderes Mitglied nach der Nachricht gelesen hat, sonst 'sent' (Haken) */
   function receipt(tid, msg) {
     const t = SN.store.peek('chats', tid);
     if (!t || !msg) return 'sent';

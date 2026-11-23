@@ -174,13 +174,13 @@
     if (M.isAway(e, now)) return { key: 'away', text: 'Abwesend' };
     if (e.brk) {
       const s = pauseStatus(e, now);
-      return { key: 'pause', text: s.state === 'over' ? '☕ Pause überzogen um ' + s.over + ' Min' : '☕ Pause bis ' + U.fmt.time(s.until) };
+      return { key: 'pause', text: s.state === 'over' ? 'Pause überzogen um ' + s.over + ' Min' : 'Pause bis ' + U.fmt.time(s.until) };
     }
     if (!M.onDuty(e, now)) return { key: 'off', text: 'Nicht im Dienst' };
     const mine = SN.comm.myTasks(e.id);
     const cur = mine.find((t) => t.state === 'taken') || mine[0];
     if (!cur) return { key: 'free', text: 'Frei, bereit für einen Auftrag' };
-    return { key: 'work', text: (cur.u ? '🔥 ' : '') + cur.title + (mine.length > 1 ? ' (+' + (mine.length - 1) + ')' : '') };
+    return { key: 'work', text: (cur.u ? 'Dringend: ' : '') + cur.title + (mine.length > 1 ? ' (+' + (mine.length - 1) + ')' : '') };
   }
 
   /** Auslastung einer Abteilung → {dept, open, cap, people} (Minuten) */
