@@ -11,6 +11,8 @@
 
   /* ---------- kleine Bausteine ------------------------------------------- */
   const sec = (title, small) => '<h2 class="sn-section-title">' + esc(title) + (small !== undefined && small !== '' ? ' <small>' + esc(small) + '</small>' : '') + '</h2>';
+  /** Abschnittstitel mit fertigem HTML (z. B. Icon + Wort) */
+  const secHtml = (html, small) => '<h2 class="sn-section-title sn-inline">' + html + (small !== undefined && small !== '' ? ' <small>' + esc(small) + '</small>' : '') + '</h2>';
   const empty = (title, text, ok) => '<div class="sn-empty' + (ok ? ' sn-empty--ok' : '') + '"><span class="sn-empty__icon">' + icon(ok ? 'check' : 'inbox') + '</span><p class="sn-empty__title">' + esc(title) + '</p>' + (text ? '<p class="sn-empty__text">' + esc(text) + '</p>' : '') + '</div>';
   const chip = (text, mod, ic) => '<span class="sn-chip' + (mod ? ' sn-chip--' + mod : '') + '">' + (ic ? icon(ic) : '') + esc(text) + '</span>';
   const btn = (label, act, data, mod, ic) => '<button type="button" class="sn-btn sn-btn--' + (mod || 'secondary') + '" data-act="' + act + '"'
@@ -292,5 +294,5 @@
     return out;
   }
 
-  SN.parts = { sec, empty, chip, btn, deadline, receipt, ackbar, steps, timeline, itemCard, list, personPicker, picked, initials, readPhotos, icon };
+  SN.parts = { sec, secHtml, empty, chip, btn, deadline, receipt, ackbar, steps, timeline, itemCard, list, personPicker, picked, initials, readPhotos, icon };
 })(window.SN = window.SN || {});

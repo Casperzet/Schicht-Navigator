@@ -56,7 +56,7 @@
     const myRep = C.sentBy(me.id).filter((it) => (it.kind === 'report' || it.kind === 'absence' || it.kind === 'call') && !C.isFinal(it));
     if (myRep.length) h += P.sec('Meine offenen Meldungen', myRep.length) + P.list(myRep, me, now, '', { compact: true });
     const kudos = C.postsFor(me.id).filter((it) => it.kudos && now - it.createdAt < 3 * U.DAY);
-    if (kudos.length) h += P.sec('Lob für dich') + kudos.map((k) => '<div class="sn-card sn-kudos">💛 <b>' + esc(M.first(k.from)) + ':</b> ' + esc(k.body || k.title) + '</div>').join('');
+    if (kudos.length) h += P.sec('Lob für dich') + kudos.map((k) => '<div class="sn-card sn-kudos">' + icon('heart-fill', 'sn-icon--sm') + ' <b>' + esc(M.first(k.from)) + ':</b> ' + esc(k.body || k.title) + '</div>').join('');
     return h;
   }
 
@@ -81,7 +81,7 @@
     ui.sheet('Hilfe rufen', '<p class="sn-muted">Geht an passende Kolleg/innen im Dienst. Du siehst, wer kommt. Ohne Zusage eskaliert der Ruf nach ' + M.settings().deadlines.call + ' Min.</p>'
       + '<div class="sn-tiles">' + M.CALL_TYPES.filter((c) => c.key !== 'meeting' || M.isLead(me)).map((c) => {
         const n = C.callTargets(c.key, me.id, now).length;
-        return '<button type="button" class="sn-tile" data-act="call-go" data-type="' + c.key + '"><span class="sn-tile__emoji" aria-hidden="true">' + c.icon + '</span><span><span class="sn-tile__label">' + esc(c.label) + '</span><span class="sn-tile__sub">' + U.fmt.count(n, 'Person', 'Personen') + ' erreichbar</span></span></button>';
+        return '<button type="button" class="sn-tile" data-act="call-go" data-type="' + c.key + '">' + icon(c.icon, 'sn-icon--lg sn-tile__icon') + '<span><span class="sn-tile__label">' + esc(c.label) + '</span><span class="sn-tile__sub">' + U.fmt.count(n, 'Person', 'Personen') + ' erreichbar</span></span></button>';
       }).join('') + '</div><div class="sn-field"><label class="sn-label" for="call-note">Hinweis (optional)</label><input class="sn-input" id="call-note" placeholder="z. B. Kasse 7, lange Schlange"></div>');
   });
   ui.on('call-go', async (el) => {
@@ -96,7 +96,7 @@
     const me = SN.session.me();
     const fa = C.firstAiders(SN.clock.now()).filter((x) => x.onDuty);
     const p = ui.sheet('SOS – Notfall', '<p><b>Bei Lebensgefahr immer zuerst anrufen:</b> <a href="tel:112">112</a> (Feuer, Rettung) · <a href="tel:110">110</a> (Polizei). Die App ersetzt den Anruf nicht.</p>'
-      + '<fieldset class="sn-choices"><legend class="sn-label">Was ist passiert?</legend>' + M.SOS_TYPES.map((t) => '<label class="sn-choice"><input type="radio" name="sos-t" value="' + t.key + '" data-change="sos-type"><span>' + t.icon + ' ' + esc(t.label) + '</span></label>').join('') + '</fieldset>'
+      + '<fieldset class="sn-choices"><legend class="sn-label">Was ist passiert?</legend>' + M.SOS_TYPES.map((t) => '<label class="sn-choice"><input type="radio" name="sos-t" value="' + t.key + '" data-change="sos-type"><span>' + icon(t.icon) + esc(t.label) + '</span></label>').join('') + '</fieldset>'
       + '<div class="sn-field"><label class="sn-label" for="sos-note">Wo? (optional)</label><input class="sn-input" id="sos-note" placeholder="z. B. Kasse 3, Gang 7" value="' + esc(me.dept || '') + '"></div>'
       + (fa.length ? '<p class="sn-muted sn-small">Ersthelfer/innen im Dienst: ' + esc(fa.map((x) => x.name + (x.inPause ? ' (Pause)' : '')).join(', ')) + '</p>' : ''),
       '<button type="button" class="sn-btn sn-btn--ack sn-btn--hold" id="sos-hold" disabled>' + icon('sos') + '<span>Halten: SOS senden</span></button><p class="sn-muted sn-small">2 Sekunden gedrückt halten – verhindert Fehlalarm in der Tasche.</p>');

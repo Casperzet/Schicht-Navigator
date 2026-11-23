@@ -19,17 +19,17 @@
     const c = cat ? M.CAT[cat] : null;
     const dept = sub.repDept || (c && c.dept) || M.deptOf(me, now) || 'Info';
     let h = '<p class="sn-muted">Was ist los? Antippen – die richtige Person bekommt es sofort und du siehst, wer reagiert.</p>'
-      + '<div class="sn-cats">' + M.REPORT_CATS.map((x) => '<button type="button" class="sn-cat" data-act="rep-cat" data-k="' + x.key + '" aria-pressed="' + (x.key === cat) + '"><span aria-hidden="true">' + x.icon + '</span>' + esc(x.label) + '</button>').join('') + '</div>'
+      + '<div class="sn-cats">' + M.REPORT_CATS.map((x) => '<button type="button" class="sn-cat" data-act="rep-cat" data-k="' + x.key + '" aria-pressed="' + (x.key === cat) + '">' + icon(x.icon, 'sn-icon--lg') + '<span>' + esc(x.label) + '</span>' + '</button>').join('') + '</div>'
       + '<div class="sn-quicklinks">' + P.btn('Restware erfassen', 'rest-new', {}, 'secondary', 'plus') + P.btn('Bruch erfassen', 'br-new', {}, 'secondary', 'plus') + '</div>';
     if (c) {
-      h += '<section class="sn-card" style="padding:14px;margin-top:12px" id="rep-form"><h2 class="sn-section-title" style="margin-top:0">' + c.icon + ' ' + esc(c.label) + '</h2>'
+      h += '<section class="sn-card" style="padding:14px;margin-top:12px" id="rep-form"><h2 class="sn-section-title" style="margin-top:0">' + icon(c.icon) + esc(c.label) + '</h2>'
         + '<p class="sn-small">Geht an: <b>' + esc(whoGets(c.key, dept, me, now)) + '</b> · eskaliert nach ' + U.fmt.dur(M.settings().deadlines[c.dl] || 15) + ' ohne Reaktion</p>'
-        + (c.dept ? '' : '<div class="sn-field"><label class="sn-label" for="rep-dept">Abteilung</label><select class="sn-select" id="rep-dept" data-change="rep-dept">' + M.DEPTS.map((d) => '<option' + (d === dept ? ' selected' : '') + ' value="' + esc(d) + '">' + esc((M.DEPT_ICONS[d] || '') + ' ' + d) + '</option>').join('') + '</select></div>')
+        + (c.dept ? '' : '<div class="sn-field"><label class="sn-label" for="rep-dept">Abteilung</label><select class="sn-select" id="rep-dept" data-change="rep-dept">' + M.DEPTS.map((d) => '<option' + (d === dept ? ' selected' : '') + ' value="' + esc(d) + '">' + esc(d) + '</option>').join('') + '</select></div>')
         + '<div class="sn-row"><label class="sn-btn sn-btn--secondary sn-btn--icon" for="rep-photo">' + icon('camera') + '<span>Foto (' + photos.length + '/4)</span></label><input type="file" id="rep-photo" accept="image/*" capture="environment" multiple hidden data-change="rep-photo">'
         + (SN.ai.dictation.available() ? '<button type="button" class="sn-btn sn-btn--secondary sn-btn--icon" data-act="mic" data-target="rep-text">' + icon('mic') + '<span>Sprechen</span></button>' : '') + '</div>'
         + '<div class="sn-photos">' + photos.map((p, i) => '<img alt="Foto ' + (i + 1) + '" src="' + esc(p) + '">').join('') + '</div>'
         + '<div class="sn-field"><label class="sn-label" for="rep-text">Kurz beschreiben (optional, jede Sprache)</label><textarea class="sn-textarea" id="rep-text" rows="2" placeholder="z. B. Gang 7, oberes Regal"></textarea><p class="sn-field__help">Wird automatisch ins Deutsche übersetzt, das Original bleibt erhalten.</p></div>'
-        + '<label class="sn-check"><input type="checkbox" id="rep-u"' + (['defect', 'safety', 'absence'].includes(c.key) ? ' checked' : '') + '>🔥 Dringend</label>'
+        + '<label class="sn-check"><input type="checkbox" id="rep-u"' + (['defect', 'safety', 'absence'].includes(c.key) ? ' checked' : '') + '><span class="sn-inline">' + ui.urgent() + '</span></label>'
         + '<button type="button" class="sn-btn sn-btn--primary sn-btn--lg sn-btn--block" data-act="rep-send" id="rep-send">' + icon('send') + '<span>Jetzt melden</span></button></section>';
     }
     const mine = C.sentBy(me.id).filter((it) => it.kind === 'report' || it.kind === 'absence');

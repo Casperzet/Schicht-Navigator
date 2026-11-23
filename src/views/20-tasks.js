@@ -17,12 +17,12 @@
     if (lim) h += '<div class="sn-progress" style="--p:' + Math.min(100, Math.round(load / lim * 100)) + '" role="img" aria-label="Auslastung"><span class="sn-progress__bar"></span></div><p class="sn-muted sn-small">Verplant ' + U.fmt.dur(load) + ' von ' + U.fmt.dur(lim) + ' (20 % bleiben für Kunden). Über das Limit wird nie zugeteilt.</p>';
     if (f === 'free') {
       h += '<div class="sn-field"><label class="sn-label" for="task-dept">Abteilung</label><select class="sn-select" id="task-dept" data-change="task-dept"><option value="">Alle Abteilungen</option>'
-        + M.DEPTS.map((d) => '<option value="' + esc(d) + '"' + (d === dept ? ' selected' : '') + '>' + esc((M.DEPT_ICONS[d] || '') + ' ' + d) + '</option>').join('') + '</select></div>';
+        + M.DEPTS.map((d) => '<option value="' + esc(d) + '"' + (d === dept ? ' selected' : '') + '>' + esc(d) + '</option>').join('') + '</select></div>';
     }
     const list = f === 'mine' ? mine : f === 'free' ? free : done;
     const urg = list.filter((t) => t.u), rest = list.filter((t) => !t.u);
     if (!list.length) return h + P.empty(f === 'mine' ? 'Keine Aufträge für dich' : f === 'free' ? 'Keine freien Aufträge' : 'Heute noch nichts erledigt', f === 'mine' ? 'Schau bei „Frei“ vorbei.' : '', f !== 'done');
-    if (urg.length) h += P.sec('🔥 Dringend', urg.length) + P.list(urg, me, now);
+    if (urg.length) h += P.secHtml(ui.urgent(), urg.length) + P.list(urg, me, now);
     if (rest.length) h += P.sec(f === 'done' ? 'Erledigt heute' : 'Nach Frist', rest.length) + P.list(rest, me, now);
     return h;
   }
