@@ -12,15 +12,15 @@
   /* ---------- Wareneingang (S3) -------------------------------------------------- */
   function goods(me, now) {
     const tr = U.sortBy(SN.store.list('trucks'), (t) => -t.at).slice(0, 6);
-    return '<section class="sn-card" style="padding:14px"><h3 class="sn-section-title" style="margin-top:0">🚚 LKW anlegen</h3>'
+    return '<section class="sn-card" style="padding:14px"><h3 class="sn-section-title" style="margin-top:0">' + icon('truck') + ' LKW anlegen</h3>'
       + '<p class="sn-muted sn-small">Aufwand: Palette 8, KKP 4, Display 6 Min. Es werden so viele Leute eingeplant, dass in ca. 60 Min entladen ist.</p>'
       + '<div class="sn-field"><label class="sn-label" for="tr-title">Lieferung</label><input class="sn-input" id="tr-title" value="LKW Zentrallager"></div>'
       + '<div class="sn-filter"><div class="sn-field"><label class="sn-label" for="tr-pal">Paletten</label><input class="sn-input" type="number" min="0" id="tr-pal" value="10" inputmode="numeric"></div>'
       + '<div class="sn-field"><label class="sn-label" for="tr-kkp">KKP</label><input class="sn-input" type="number" min="0" id="tr-kkp" value="0" inputmode="numeric"></div>'
       + '<div class="sn-field"><label class="sn-label" for="tr-disp">Displays</label><input class="sn-input" type="number" min="0" id="tr-disp" value="0" inputmode="numeric"></div></div>'
-      + '<label class="sn-check"><input type="checkbox" id="tr-u">🔥 Dringend</label>'
+      + '<label class="sn-check"><input type="checkbox" id="tr-u">' + SN.ui.urgent() + '</label>'
       + P.btn('Anlegen und Team einplanen', 'tr-add', {}, 'primary', 'users') + '</section>'
-      + P.sec('Heute', tr.length) + (tr.map((t) => { const ef = SN.dist.truckEffort(t); return '<div class="sn-card" style="padding:12px"><b>🚚 ' + esc(t.title) + '</b><p class="sn-small">' + t.pal + ' Paletten · ' + t.kkp + ' KKP · ' + t.disp + ' Displays · ca. ' + U.fmt.dur(ef.min) + ' · ' + U.fmt.count(ef.people, 'Person', 'Personen') + ' · ' + esc(U.fmt.ago(t.at)) + '</p></div>'; }).join('') || P.empty('Noch keine Lieferung'));
+      + P.sec('Heute', tr.length) + (tr.map((t) => { const ef = SN.dist.truckEffort(t); return '<div class="sn-card" style="padding:12px"><b>' + icon('truck') + ' ' + esc(t.title) + '</b><p class="sn-small">' + t.pal + ' Paletten · ' + t.kkp + ' KKP · ' + t.disp + ' Displays · ca. ' + U.fmt.dur(ef.min) + ' · ' + U.fmt.count(ef.people, 'Person', 'Personen') + ' · ' + esc(U.fmt.ago(t.at)) + '</p></div>'; }).join('') || P.empty('Noch keine Lieferung'));
   }
   ui.on('tr-add', async () => {
     const me = SN.session.me(), now = SN.clock.now();
@@ -75,13 +75,13 @@
     const l = U.sortBy(SN.store.list('templates'), (t) => t.at || '');
     return '<p class="sn-muted">Wiederkehrende Aufträge und Rundgänge. Der Admin vom Dienst legt sie automatisch zur Uhrzeit an; Checklisten eskalieren, wenn nicht abgehakt.</p>'
       + P.btn('Neue Vorlage', 'tpl-new', {}, 'secondary', 'plus')
-      + l.map((t) => '<div class="sn-card" style="padding:12px"><b>' + esc(t.at || '') + ' · ' + esc(t.title) + '</b> ' + (t.u ? '🔥' : '') + '<p class="sn-small">' + esc(t.dept + ' · ' + t.act + (t.checklist ? ' · Checkliste (' + t.checklist.length + ')' : '') + ' · ' + (t.days && t.days.length === 6 ? 'Mo–Sa' : 'täglich') + (t.lastRun === U.fmt.dayKey(SN.clock.now()) ? ' · heute angelegt' : '')) + '</p><div class="sn-card__actions">' + P.btn('Jetzt anlegen', 'tpl-run', { id: t.id }, 'secondary') + P.btn('Löschen', 'tpl-del', { id: t.id }, 'ghost') + '</div></div>').join('');
+      + l.map((t) => '<div class="sn-card" style="padding:12px"><b>' + esc(t.at || '') + ' · ' + esc(t.title) + '</b> ' + (t.u ? SN.ui.urgent() : '') + '<p class="sn-small">' + esc(t.dept + ' · ' + t.act + (t.checklist ? ' · Checkliste (' + t.checklist.length + ')' : '') + ' · ' + (t.days && t.days.length === 6 ? 'Mo–Sa' : 'täglich') + (t.lastRun === U.fmt.dayKey(SN.clock.now()) ? ' · heute angelegt' : '')) + '</p><div class="sn-card__actions">' + P.btn('Jetzt anlegen', 'tpl-run', { id: t.id }, 'secondary') + P.btn('Löschen', 'tpl-del', { id: t.id }, 'ghost') + '</div></div>').join('');
   }
   ui.on('tpl-new', () => ui.sheet('Neue Vorlage', '<div class="sn-field"><label class="sn-label" for="tp-title">Titel</label><input class="sn-input" id="tp-title"></div>'
     + '<div class="sn-filter"><div class="sn-field"><label class="sn-label" for="tp-at">Uhrzeit</label><input class="sn-input" type="time" id="tp-at" value="07:00"></div><div class="sn-field"><label class="sn-label" for="tp-dept">Abteilung</label><select class="sn-select" id="tp-dept">' + deptOpts('Obst und Gemüse') + '</select></div></div>'
     + '<div class="sn-field"><label class="sn-label" for="tp-act">Tätigkeit</label><select class="sn-select" id="tp-act">' + M.ACTS.map((a) => '<option>' + esc(a.key) + '</option>').join('') + '</select></div>'
     + '<div class="sn-field"><label class="sn-label" for="tp-check">Checkliste (optional, ein Punkt pro Zeile)</label><textarea class="sn-textarea" id="tp-check" rows="3"></textarea></div>'
-    + '<label class="sn-check"><input type="checkbox" id="tp-u">🔥 Dringend</label><label class="sn-check"><input type="checkbox" id="tp-sat" checked>Auch samstags</label>',
+    + '<label class="sn-check"><input type="checkbox" id="tp-u">' + SN.ui.urgent() + '</label><label class="sn-check"><input type="checkbox" id="tp-sat" checked>Auch samstags</label>',
   P.btn('Speichern', 'tpl-save', {}, 'primary', 'check')));
   ui.on('tpl-save', async () => {
     const title = String(ui.sheetVal('tp-title') || '').trim(); if (!title) return ui.toast('Bitte einen Titel eingeben.', 'warn');
@@ -98,9 +98,9 @@
   /* ---------- Einstellungen ------------------------------------------------------- */
   function settings(me, now) {
     const s = M.settings(), cur = M.adminOnDuty(now);
-    return '<section class="sn-card" style="padding:14px"><h3 class="sn-section-title" style="margin-top:0">🛡 Admin vom Dienst</h3><p class="sn-small">Bekommt Defekte und eskalierte Meldungen. Jetzt: <b>' + esc(M.name(cur)) + '</b></p>'
+    return '<section class="sn-card" style="padding:14px"><h3 class="sn-section-title" style="margin-top:0">' + icon('shield') + ' Admin vom Dienst</h3><p class="sn-small">Bekommt Defekte und eskalierte Meldungen. Jetzt: <b>' + esc(M.name(cur)) + '</b></p>'
       + '<div class="sn-chips">' + M.admins().map((id) => '<button type="button" class="sn-chip' + (id === cur ? ' sn-chip--solid' : ' sn-chip--outline') + '" data-act="duty" data-id="' + id + '">' + esc(M.name(id)) + '</button>').join('') + '</div></section>'
-      + '<section class="sn-card" style="padding:14px"><h3 class="sn-section-title" style="margin-top:0">⏰ Eskalationsfristen (Minuten ohne Reaktion)</h3>'
+      + '<section class="sn-card" style="padding:14px"><h3 class="sn-section-title" style="margin-top:0">' + icon('clock') + ' Eskalationsfristen (Minuten ohne Reaktion)</h3>'
       + Object.entries(M.DEADLINE_LABELS).map(([k, l]) => '<div class="sn-field"><label class="sn-label" for="dl-' + k + '">' + esc(l) + '</label><input class="sn-input" type="number" min="1" max="240" id="dl-' + k + '" value="' + s.deadlines[k] + '"></div>').join('')
       + P.btn('Fristen speichern', 'dl-save', {}, 'primary', 'check') + '</section>'
       + staffing(s)
@@ -129,7 +129,7 @@
       const d = U.fmt.dayKey(now - i * U.DAY);
       for (const sh of M.SHIFT_NAMES) {
         const a = C.moodAggregate(d, sh);
-        h += '<div class="sn-card" style="padding:10px"><b>' + esc(U.fmt.date(now - i * U.DAY) + ' · ' + sh) + '</b>' + (a ? '<div class="sn-bars">' + ['😀', '🙂', '😐', '🙁'].map((m, k) => '<div><span>' + m + '</span><i style="width:' + Math.round((a.c[k + 1] || 0) / a.n * 100) + '%"></i><span>' + (a.c[k + 1] || 0) + '</span></div>').join('') + '</div>' : '<p class="sn-muted sn-small">Weniger als 5 Antworten – nicht angezeigt.</p>') + '</div>';
+        h += '<div class="sn-card" style="padding:10px"><b>' + esc(U.fmt.date(now - i * U.DAY) + ' · ' + sh) + '</b>' + (a ? '<div class="sn-bars">' + ['Sehr gut', 'Gut', 'Geht so', 'Schlecht'].map((m, k) => '<div><span>' + icon('mood-' + (k + 1)) + ' ' + esc(m) + '</span><i style="width:' + Math.round((a.c[k + 1] || 0) / a.n * 100) + '%"></i><span>' + (a.c[k + 1] || 0) + '</span></div>').join('') + '</div>' : '<p class="sn-muted sn-small">Weniger als 5 Antworten – nicht angezeigt.</p>') + '</div>';
       }
     }
     return h;
@@ -141,9 +141,9 @@
   }
 
   function render({ me, now, sub }) {
-    const tabs = [['goods', '🚚 Lieferung'], ['stock', '📦 Restware'], ['tpl', '🔁 Vorlagen'], ['set', '⚙️ Einstellungen'], ['mood', '🙂 Stimmung'], ['log', '🧾 Protokoll']];
+    const tabs = [['goods', 'Lieferung', 'truck'], ['stock', 'Restware', 'package'], ['tpl', 'Vorlagen', 'repeat'], ['set', 'Einstellungen', 'settings'], ['mood', 'Stimmung', 'mood-2'], ['log', 'Protokoll', 'receipt']];
     const t = sub.moreTab || 'goods';
-    const head = '<div class="sn-chips" role="tablist">' + tabs.map(([k, l]) => '<button type="button" role="tab" class="sn-chip' + (k === t ? ' sn-chip--solid' : ' sn-chip--outline') + '" aria-selected="' + (k === t) + '" data-act="more-tab" data-k="' + k + '">' + l + '</button>').join('') + '</div>';
+    const head = '<div class="sn-chips" role="tablist">' + tabs.map(([k, l, ic]) => '<button type="button" role="tab" class="sn-chip' + (k === t ? ' sn-chip--solid' : ' sn-chip--outline') + '" aria-selected="' + (k === t) + '" data-act="more-tab" data-k="' + k + '">' + icon(ic) + ' ' + l + '</button>').join('') + '</div>';
     const body = t === 'goods' ? SN.ui.views.ware.render({ me, now, sub, params: {} }) : t === 'stock' ? stock() : t === 'tpl' ? templates() : t === 'set' ? settings(me, now) : t === 'mood' ? mood(now) : logView(now);
     const quick = '<div class="sn-quicklinks">' + P.btn('Personal', 'go-staff', {}, 'secondary', 'users') + P.btn('Wochenplan', 'go-week', {}, 'secondary', 'tasks') + (M.canAiAssist(me) ? P.btn('KI-Diktat', 'go-ai', {}, 'secondary', 'mic') : '') + P.btn('Ich / Abmelden', 'go-me', {}, 'ghost', 'user') + '</div>';
     return quick + head + body;
@@ -162,7 +162,7 @@
       + (can.text ? '' : '<div class="sn-alert sn-alert--info sn-alert--card"><p class="sn-alert__title">KI nur in der Claude-Ansicht verfügbar.</p></div>')
       + '<div class="sn-field"><label class="sn-label" for="ai-text">Diktat</label><textarea class="sn-textarea" id="ai-text" rows="4"></textarea></div>'
       + '<div class="sn-row" style="gap:8px">' + (can.dictation ? P.btn('Sprechen', 'mic', { target: 'ai-text' }, 'secondary', 'mic') : '') + P.btn('Aufträge erkennen', 'ai-go', {}, 'primary') + '</div>'
-      + (found.length ? P.sec('Erkannt – bitte prüfen', found.length) + found.map((f, i) => '<div class="sn-card' + (f.u ? ' sn-card--urgent' : '') + '" style="padding:12px"><b>' + (f.u ? '🔥 ' : '') + esc(f.t) + '</b><p class="sn-small">' + esc(f.dept + ' · ' + f.act) + '</p>'
+      + (found.length ? P.sec('Erkannt – bitte prüfen', found.length) + found.map((f, i) => '<div class="sn-card' + (f.u ? ' sn-card--urgent' : '') + '" style="padding:12px"><b>' + (f.u ? SN.ui.urgent() + ' ' : '') + esc(f.t) + '</b><p class="sn-small">' + esc(f.dept + ' · ' + f.act) + '</p>'
         + '<div class="sn-field"><label class="sn-label" for="ai-who-' + i + '">Für ' + (f.who && !f.wid ? '<span class="sn-chip sn-chip--urgent">„' + esc(f.who) + '“ nicht gefunden</span>' : '') + '</label><select class="sn-select" id="ai-who-' + i + '"><option value="">Automatisch verteilen</option>' + U.sortBy(SN.dist.candidates(SN.clock.now()), (e) => e.name).map((e) => '<option value="' + e.id + '"' + (e.id === f.wid ? ' selected' : '') + '>' + esc(e.name) + '</option>').join('') + '</select></div></div>').join('')
         + P.btn('Alle senden und verteilen', 'ai-send', {}, 'primary', 'send') : '');
   }

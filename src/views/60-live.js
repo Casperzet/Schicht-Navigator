@@ -55,7 +55,7 @@
     if (scope) h += '<p class="sn-muted sn-small">Dein Bereich: ' + esc(scope.join(', ')) + '</p>';
     h += hotspots(me, now, scope);
     const over = (pa.over || []).filter((x) => !scope || scope.includes(M.deptOf(M.emp(x.id || x), now)));
-    if (over.length) h += '<div class="sn-alert sn-alert--warn sn-alert--card"><p class="sn-alert__title">☕ Pause überzogen: ' + esc(over.map((x) => M.first(x.id || x)).join(', ')) + '</p><p class="sn-alert__text">Kurz nachfragen – ohne Vorwurf, vielleicht ist etwas passiert.</p></div>';
+    if (over.length) h += '<div class="sn-alert sn-alert--warn sn-alert--card"><p class="sn-alert__title">Pause überzogen: ' + esc(over.map((x) => M.first(x.id || x)).join(', ')) + '</p><p class="sn-alert__text">Kurz nachfragen – ohne Vorwurf, vielleicht ist etwas passiert.</p></div>';
     h += '<div class="sn-row" style="gap:8px;margin:12px 0">' + P.btn('Schnellruf', 'call-sheet', {}, 'secondary', 'bell') + P.btn('Neu verteilen', 'live-dist', {}, 'secondary', 'users') + '</div>';
     const dept = sub.liveDept || '';
     const q = (sub.liveQ || '').toLowerCase();
@@ -83,8 +83,8 @@
     const e = M.emp(el.dataset.id), now = SN.clock.now();
     ui.sheet('Auftrag für ' + e.name, '<p class="sn-muted sn-small">Frei: ' + U.fmt.dur(SN.dist.freeOf(e, now)) + ' bis zum Limit · ' + esc(SN.dist.status(e, now).text) + '</p>'
       + '<div class="sn-field"><label class="sn-label" for="pt-title">Was ist zu tun?</label><textarea class="sn-textarea" id="pt-title" rows="2"></textarea></div>'
-      + '<div class="sn-field"><label class="sn-label" for="pt-act">Tätigkeit</label><select class="sn-select" id="pt-act">' + M.ACTS.map((a) => '<option' + ((e.acts || [])[0] === a.key ? ' selected' : '') + ' value="' + esc(a.key) + '">' + esc(a.label + ((e.acts || []).includes(a.key) ? ' ✓' : '')) + '</option>').join('') + '</select></div>'
-      + '<label class="sn-check"><input type="checkbox" id="pt-u">🔥 Dringend</label>',
+      + '<div class="sn-field"><label class="sn-label" for="pt-act">Tätigkeit</label><select class="sn-select" id="pt-act">' + M.ACTS.map((a) => '<option' + ((e.acts || [])[0] === a.key ? ' selected' : '') + ' value="' + esc(a.key) + '">' + esc(a.label + ((e.acts || []).includes(a.key) ? ' (passt)' : '')) + '</option>').join('') + '</select></div>'
+      + '<label class="sn-check"><input type="checkbox" id="pt-u">' + SN.ui.urgent() + '</label>',
     P.btn('Senden', 'p-task-go', { id: e.id }, 'primary', 'send'));
   });
   ui.on('p-task-go', async (el) => {

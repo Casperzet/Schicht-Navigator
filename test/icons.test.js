@@ -13,12 +13,7 @@ const ROOT = path.resolve(__dirname, '..');
 
 /* ---- Ausnahmen: Dateien anderer Arbeitspakete, werden später bereinigt. ----
    Zum Scharfschalten einfach den Eintrag löschen (Präfix-Vergleich auf den relativen Pfad). */
-const EMOJI_EXCEPTIONS = [
-  'src/views/12-',
-  'src/views/14-',
-  'src/views/60-live.js',
-  'src/views/80-more.js',
-];
+const EMOJI_EXCEPTIONS = [];
 
 /* ---- Pflicht-Icons (Vertrag mit den anderen Ansichten) ---- */
 const REQUIRED = ('home tasks chat report menu plus minus clock pin camera mic send escalate forward coffee sos shield check check-circle x users user '
