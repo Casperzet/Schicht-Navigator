@@ -1,0 +1,7 @@
+{
+  "appId": "app.schichtnavigator.filiale",
+  "appName": "Schicht-Navigator",
+  "webDir": "www",
+  "android": { "allowMixedContent": true },
+  "server": { "androidScheme": "https" }
+}

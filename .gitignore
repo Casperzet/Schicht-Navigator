@@ -1,2 +1,8 @@
 .claude/
 dist/
+android-app/node_modules/
+android-app/android/app/build/
+android-app/android/build/
+android-app/android/.gradle/
+release/*.apk
+server/data/
