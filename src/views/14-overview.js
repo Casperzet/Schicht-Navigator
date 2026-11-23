@@ -92,7 +92,7 @@
       + '<div class="sn-chips sn-chips--scroll" role="group" aria-label="Art">' + [['', 'Alle Arten']].concat(O.KINDS).map(([k, l]) => '<button type="button" class="sn-chip ' + ((f.kind || '') === k ? 'sn-chip--solid' : 'sn-chip--outline') + '" aria-pressed="' + ((f.kind || '') === k) + '" data-act="ov-kind" data-k="' + k + '">' + esc(l) + '</button>').join('') + '</div>'
       + '<div class="sn-filter"><div><label class="sn-label sn-sr-only" for="ov-dept">Abteilung</label><select class="sn-select" id="ov-dept" data-change="ov-dept"><option value="">Alle Abteilungen</option>' + M.DEPTS.map((d) => '<option value="' + esc(d) + '"' + (d === f.dept ? ' selected' : '') + '>' + esc(d) + '</option>').join('') + '</select></div>'
       + '<button type="button" class="sn-chip ' + (f.urgent ? 'sn-chip--solid' : 'sn-chip--outline') + ' sn-ov-urgent" aria-pressed="' + f.urgent + '" data-act="ov-urgent">' + icon('flame') + 'Dringend</button></div>'
-      + '<div class="sn-segment" role="group" aria-label="Schicht">' + [['', 'Alle Schichten'], ['Früh', 'Früh'], ['Spät', 'Spät']].map(([k, l]) => '<button type="button" class="sn-segment__tab" aria-pressed="' + ((f.shift || '') === k) + '" data-act="ov-shift" data-k="' + k + '">' + esc(l) + '</button>').join('') + '</div>'
+      + '<div class="sn-segment" role="group" aria-label="Schicht">' + [['', 'Alle'], ['Früh', 'Früh'], ['Spät', 'Spät']].map(([k, l]) => '<button type="button" class="sn-segment__tab" aria-pressed="' + ((f.shift || '') === k) + '" data-act="ov-shift" data-k="' + k + '">' + esc(l) + '</button>').join('') + '</div>'
       + '<div class="sn-row sn-ov-stale"><span class="sn-small">Unbeantwortet ab</span>' + O.STALE_CHOICES.map((m) => '<button type="button" class="sn-chip ' + (m === staleMin ? 'sn-chip--solid' : 'sn-chip--outline') + '" aria-pressed="' + (m === staleMin) + '" data-act="ov-stale" data-k="' + m + '">' + m + ' Min</button>').join('') + '</div>';
     const vl = (O.VIEWS.find((x) => x[0] === view) || [])[1];
     h += '<div class="sn-row sn-row--between sn-ov-listhead"><h2 class="sn-section-title" style="margin:0">' + esc(vl) + ' <small>' + list.length + '</small></h2>' + (filtered ? '<button type="button" class="sn-btn sn-btn--ghost" data-act="ov-reset">' + icon('x') + '<span>Filter zurücksetzen</span></button>' : '') + '</div>';
@@ -109,8 +109,8 @@
   function awayRow(a, p) {
     const e = M.emp(a.id);
     return '<li class="sn-list__item sn-ov-away"><span class="sn-avatar sn-avatar--sm">' + esc(P.initials(M.name(a.id))) + '</span><div class="sn-list__body"><p class="sn-list__title">' + esc(M.name(a.id)) + '</p>'
-      + '<p class="sn-list__sub">' + esc((a.dept || '–') + ' · ' + (e ? M.role(e).label : '')) + '</p></div>'
-      + '<span class="sn-chip sn-chip--warn">' + icon(TYPE_ICON[a.type] || 'user-x') + esc(O.AWAY_TYPES[a.type] + ' · ' + a.period) + '</span>'
+      + '<p class="sn-list__sub">' + esc((a.dept || '–') + ' · ' + (e ? M.role(e).label : '')) + '</p>'
+      + '<span class="sn-chip sn-chip--warn">' + icon(TYPE_ICON[a.type] || 'user-x') + esc(O.AWAY_TYPES[a.type] + ' · ' + a.period) + '</span></div>'
       + '<button type="button" class="sn-btn sn-btn--ghost" data-act="st-open" data-id="' + a.id + '" aria-label="Details zu ' + esc(M.name(a.id)) + '">' + icon('edit') + '<span>Details</span></button></li>';
   }
   function deptRow(r, sel) {

@@ -42,15 +42,14 @@
 .sn-ov-stale { flex-wrap: wrap; gap: 6px; }
 .sn-ov-listhead { margin-top: var(--sn-space-5, 20px) !important; }
 .sn-ov-item { margin-top: var(--sn-space-3, 12px); }
-.sn-ov-item .sn-card { margin: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.sn-ov-item .sn-card { margin: 0 !important; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 .sn-ov-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 12px; background: var(--sn-surface); border: 1px solid var(--sn-border); border-top: 0; border-radius: 0 0 var(--sn-radius-md, 12px) var(--sn-radius-md, 12px); }
 .sn-ov-actions .sn-btn { flex: 1 1 auto; min-height: 48px; }
 
 /* Anwesenheit */
-.sn-ov-away { flex-wrap: wrap; padding-top: 8px; padding-bottom: 8px; }
-.sn-ov-away .sn-list__body { flex: 1 1 160px; }
-.sn-ov-away .sn-chip { order: 3; white-space: normal; margin-left: 44px; flex: 1 1 100%; }
-.sn-ov-away .sn-btn { order: 2; }
+.sn-ov-away { padding-top: 8px; padding-bottom: 8px; align-items: flex-start; }
+.sn-ov-away .sn-list__body { min-width: 0; }
+.sn-ov-away .sn-chip { margin-top: 4px; white-space: normal; }
 .sn-ov-depts { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .sn-ov-dept { width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; text-align: left; min-height: 56px; padding: 8px 12px; font: inherit; color: var(--sn-text); background: var(--sn-surface); border: 1px solid var(--sn-border); border-radius: var(--sn-radius-md, 12px); cursor: pointer; }
 .sn-ov-dept.is-short { border: 2px solid var(--sn-warn-line); background: var(--sn-warn-bg); color: var(--sn-warn-fg); }
@@ -82,3 +81,9 @@
 .sn-st-plan { display: grid; grid-template-columns: 44px 1fr; gap: 6px 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--sn-border); }
 .sn-st-plan .sn-filter { margin: 0; grid-column: 1 / -1; }
 .sn-st-plan .sn-input { min-width: 0; }
+
+.sn-sheet [hidden], .sn-ov [hidden] { display: none !important; }
+.sn-sheet .sn-select, .sn-sheet .sn-input { width: 100%; }
+.sn-sheet .sn-row .sn-input { flex: 1; }
+.sn-sheet fieldset.sn-choices { border: 0; padding: 0; margin: 0 0 12px; display: block; min-width: 0; }
+.sn-sheet fieldset.sn-choices > .sn-choices { display: grid; gap: 6px; }
