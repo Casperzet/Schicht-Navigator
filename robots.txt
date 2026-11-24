@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: /
+Sitemap: https://casperzet.github.io/Schicht-Navigator/sitemap.xml
