@@ -187,7 +187,16 @@
     if (bad.length) { err.textContent = S.ct.err + ' ' + bad.join(', ') + '.'; err.hidden = false; return; }
     if ($('#f-web').value) return; /* honeypot */
     var payload = { name: name.value.trim(), contact: contact.value.trim(), size: $('#f-size').value, message: $('#f-msg').value.trim(), market: current, lang: S.lang };
-    if (CFG.preview || !CFG.formEndpoint) { showSent(!!CFG.preview); return; }
+    if (CFG.preview) { showSent(true); return; }
+    if (!CFG.formEndpoint) {
+      /* no form service: hand the request over to the visitor's email app */
+      var body = [S.ct.name + ': ' + payload.name, S.ct.contact + ': ' + payload.contact, S.ct.size + ': ' + payload.size, payload.message].join('\n');
+      var mail = 'mailto:' + CFG.email + '?subject=' + encodeURIComponent('FreiForms: ' + payload.name) + '&body=' + encodeURIComponent(body);
+      showSent(false);
+      var n = $('#f-sent-note'); n.textContent = S.ct.mail_note + ' ' + CFG.email;
+      location.href = mail;
+      return;
+    }
     var btn = $('#f-send'); btn.disabled = true; btn.textContent = S.ct.sending;
     fetch(CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(payload) })
       .then(function (r) { if (!r.ok) throw new Error(r.status); showSent(false); })
