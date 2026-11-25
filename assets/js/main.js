@@ -18,6 +18,20 @@
     document.documentElement.setAttribute('data-theme', next); store.set('sh-theme', next);
   });
 
+  /* mobile nav: burger opens the menu panel; closes on link click or outside tap */
+  var burger = $('#nav-burger'), panel = $('#nav-menu-panel');
+  if (burger && panel) {
+    var closeMenu = function () { burger.setAttribute('aria-expanded', 'false'); panel.classList.remove('is-open'); };
+    burger.addEventListener('click', function () {
+      var open = burger.getAttribute('aria-expanded') === 'true';
+      burger.setAttribute('aria-expanded', open ? 'false' : 'true');
+      panel.classList.toggle('is-open', !open);
+    });
+    $$('a,button', panel).forEach(function (el) { el.addEventListener('click', function () { if (window.innerWidth <= 860) closeMenu(); }); });
+    document.addEventListener('click', function (e) { if (!panel.contains(e.target) && !burger.contains(e.target)) closeMenu(); });
+    window.addEventListener('resize', function () { if (window.innerWidth > 860) closeMenu(); });
+  }
+
   /* reveal on scroll (content stays visible if observer is missing) */
   if ('IntersectionObserver' in window && !reduceMotion) {
     var io = new IntersectionObserver(function (es) {

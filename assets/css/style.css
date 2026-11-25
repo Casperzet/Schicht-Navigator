@@ -9,17 +9,17 @@
 @font-face{font-family:"Inter Display";src:url("../fonts/InterDisplay-700.woff") format("woff");font-weight:700;font-display:swap}
 @font-face{font-family:"Instrument Serif";src:url("../fonts/InstrumentSerif-Italic.woff") format("woff");font-style:italic;font-weight:400;font-display:swap}
 
-/* ---------- Themen ---------- */
+/* ---------- Themen: Quiet Premium (dunkler Graphit + Koralle, Markenstandard) ---------- */
 :root{
-  --bg:#F7F5F0;--bg2:#FFFFFF;--ink:#14161C;--muted:#575D6C;--line:rgba(20,22,28,.09);
-  --glass:rgba(255,255,255,.6);--glass2:rgba(255,255,255,.85);--soft:#EEF0F5;
-  --accent:#2F55D4;--accentInk:#FFFFFF;--accentSoft:#E6ECFF;--blob:.6;--shadow:rgba(30,40,80,.16);
-  color-scheme:light;
+  --bg:#0D0E12;--bg2:#15171D;--ink:#F3F1EC;--muted:#9A9FAE;--line:rgba(255,255,255,.1);
+  --glass:rgba(255,255,255,.05);--glass2:rgba(21,23,29,.86);--soft:rgba(255,255,255,.06);
+  --accent:#FF8A6E;--accentInk:#14161C;--accentSoft:rgba(255,138,110,.14);--blob:.28;--shadow:rgba(0,0,0,.6);
+  color-scheme:dark;
 }
 [data-theme="dark"]{
-  --bg:#0D0F14;--bg2:#151820;--ink:#F2F1ED;--muted:#A6ABB8;--line:rgba(255,255,255,.1);
-  --glass:rgba(255,255,255,.05);--glass2:rgba(24,27,36,.85);--soft:rgba(255,255,255,.07);
-  --accent:#93A9FF;--accentInk:#0D0F14;--accentSoft:rgba(147,169,255,.14);--blob:.22;--shadow:rgba(0,0,0,.6);
+  --bg:#0D0E12;--bg2:#15171D;--ink:#F3F1EC;--muted:#9A9FAE;--line:rgba(255,255,255,.1);
+  --glass:rgba(255,255,255,.05);--glass2:rgba(21,23,29,.86);--soft:rgba(255,255,255,.06);
+  --accent:#FF8A6E;--accentInk:#14161C;--accentSoft:rgba(255,138,110,.14);--blob:.28;--shadow:rgba(0,0,0,.6);
   color-scheme:dark;
 }
 
@@ -76,7 +76,9 @@ a.btn-soft{color:var(--ink)}
 .logo-mark span:first-child{position:absolute;left:0;top:0;width:20px;height:20px;border-radius:7px;background:#5B7CFF}
 .logo-mark span:last-child{position:absolute;right:0;bottom:0;width:20px;height:20px;border-radius:999px;background:#FF9A7E;mix-blend-mode:multiply}
 .logo-text{font-size:22px}
+.menu-panel{display:flex;align-items:center;gap:14px;flex:1;min-width:0;justify-content:space-between}
 .menu{display:flex;gap:2px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.nav-actions-panel{display:flex;align-items:center;gap:8px}
 .nav-link{display:inline-flex;align-items:center;text-decoration:none;color:var(--muted);padding:0 15px;border-radius:999px;font-size:15px;font-weight:500;min-height:44px;transition:background .3s,color .3s}
 .nav-link:hover{color:var(--ink);background:var(--soft)}
 .nav-link[aria-current="page"]{color:var(--ink);background:var(--bg2);box-shadow:0 0 0 1px var(--line),0 6px 16px -10px var(--shadow)}
@@ -85,9 +87,14 @@ a.btn-soft{color:var(--ink)}
 .icon-btn:hover{transform:rotate(-12deg)}
 .icon-moon{display:block}.icon-sun{display:none}
 [data-theme="dark"] .icon-moon{display:none}[data-theme="dark"] .icon-sun{display:block}
+.nav-burger{width:46px;height:46px;border-radius:999px;border:0;align-items:center;justify-content:center;background:var(--soft);color:var(--ink);flex:none;gap:4px}
+.nav-burger span{display:block;width:18px;height:2px;border-radius:2px;background:currentColor;transition:transform .3s,opacity .3s}
+.nav-burger[aria-expanded="true"] span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.nav-burger[aria-expanded="true"] span:nth-child(2){opacity:0}
+.nav-burger[aria-expanded="true"] span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
 
 /* ---------- Buttons ---------- */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;font-weight:600;font-size:16px;text-decoration:none;border:0;transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s,background .35s}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;font-weight:600;font-size:16px;text-decoration:none;border:0;white-space:nowrap;flex:none;transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s,background .35s}
 .btn:hover{transform:translateY(-2px)}
 .btn-accent{background:var(--accent);color:var(--accentInk);box-shadow:0 14px 30px -14px var(--accent)}
 .btn-accent:hover{color:var(--accentInk)}
@@ -110,18 +117,24 @@ a.btn-soft{color:var(--ink)}
 @keyframes grow{from{transform:scaleY(.08)}to{transform:scaleY(1)}}
 @keyframes lineGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.06);opacity:1}100%{transform:scale(1)}}
-.rise{animation:rise .8s cubic-bezier(.2,.7,.2,1) both}
-.d1{animation-delay:.06s}.d2{animation-delay:.14s}.d3{animation-delay:.22s}.d4{animation-delay:.3s}
-.screen-in{animation:screenIn .6s cubic-bezier(.2,.7,.2,1) both}
-.float-a{animation:floatA 7s ease-in-out infinite}
-.float-b{animation:floatB 8s ease-in-out infinite}
-.live{width:8px;height:8px;border-radius:999px;background:#22C08A;animation:pulse 1.8s ease-out infinite;flex:none;display:inline-block}
-.row-in{animation:slideIn .6s cubic-bezier(.2,.7,.2,1) both}
-.prog{animation:progress 1.6s cubic-bezier(.4,0,.2,1) .3s both}
-.bar{transform-origin:bottom;animation:grow 1s cubic-bezier(.2,.7,.2,1) both}
-.pop{animation:pop .45s cubic-bezier(.2,.7,.2,1) both}
-.reveal{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}
-.reveal.is-in{opacity:1;transform:none}
+/* Alle Entrance-Effekte sind reine Verbesserung: Standardzustand ist immer sichtbar.
+   Erst wenn Bewegung erlaubt ist (kein prefers-reduced-motion) UND JS läuft (html.js),
+   wird aus Start- in Endzustand animiert. So kann Inhalt nie "unsichtbar hängen bleiben". */
+.live{width:8px;height:8px;border-radius:999px;background:#22C08A;flex:none;display:inline-block}
+@media (prefers-reduced-motion:no-preference){
+  html.js .rise{animation:rise .8s cubic-bezier(.2,.7,.2,1) both}
+  html.js .d1{animation-delay:.06s}html.js .d2{animation-delay:.14s}html.js .d3{animation-delay:.22s}html.js .d4{animation-delay:.3s}
+  html.js .screen-in{animation:screenIn .6s cubic-bezier(.2,.7,.2,1) both}
+  .float-a{animation:floatA 7s ease-in-out infinite}
+  .float-b{animation:floatB 8s ease-in-out infinite}
+  .live{animation:pulse 1.8s ease-out infinite}
+  html.js .row-in{animation:slideIn .6s cubic-bezier(.2,.7,.2,1) both}
+  html.js .prog{animation:progress 1.6s cubic-bezier(.4,0,.2,1) .3s both}
+  html.js .bar{transform-origin:bottom;animation:grow 1s cubic-bezier(.2,.7,.2,1) both}
+  html.js .pop{animation:pop .45s cubic-bezier(.2,.7,.2,1) both}
+  html.js .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}
+  html.js .reveal.is-in{opacity:1;transform:none}
+}
 
 /* ---------- Geräte-Mockups (immer helle Oberfläche) ---------- */
 .laptop-lid{position:relative;background:#1A1D26;border-radius:18px 18px 8px 8px;padding:11px 11px 15px;box-shadow:0 40px 80px -36px rgba(20,30,60,.5)}
@@ -235,14 +248,20 @@ a.btn-soft{color:var(--ink)}
   .g-4,.g-3{grid-template-columns:repeat(2,minmax(0,1fr))}
   .h1{font-size:56px}.h1-sub{font-size:54px}.h2{font-size:40px}
 }
-@media (max-width:660px){
+.nav-burger{display:none}
+@media (max-width:860px){
   .g-4,.g-3{grid-template-columns:minmax(0,1fr)}
   .wrap{padding:0 18px}
   .h1{font-size:42px}.h1-sub{font-size:40px}.h2{font-size:32px}
-  .nav-cta,.hide-sm{display:none!important}
-  .navbar{border-radius:24px;margin:10px 0 0;padding:8px 8px 8px 14px}
-  .navbar nav{order:3;width:100%;min-width:0}
-  .menu{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+  .hide-sm{display:none!important}
+  .navbar{border-radius:24px;margin:10px 0 0;padding:10px 12px}
+  .nav-burger{display:flex}
+  .navbar nav.menu-panel{order:4;width:100%;min-width:0;display:none;flex-direction:column;align-items:stretch;gap:4px;padding:10px 4px 6px;max-height:70vh;overflow-y:auto}
+  .navbar nav.menu-panel.is-open{display:flex}
+  .menu{flex-direction:column;align-items:stretch;gap:2px}
+  .nav-link{min-height:48px;width:100%;border-radius:14px;padding:0 16px}
+  .nav-actions-panel{display:flex;flex-direction:column;gap:10px;padding:10px 6px 2px;border-top:1px solid var(--line);margin-top:6px}
+  .nav-actions-panel .btn{width:100%}
   .stage{padding:24px;min-height:560px}
   .cookie{right:20px;bottom:90px}
   .phone{transform:scale(.92)}
